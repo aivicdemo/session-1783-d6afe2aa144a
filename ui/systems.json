@@ -5766,6 +5766,12 @@
     ]
   },
   {
+    "systemId": "__common__",
+    "systemName": "__common__",
+    "screens": [],
+    "tableDefinitions": []
+  },
+  {
     "systemId": "itg-3",
     "systemName": "食費管理・最適化システム",
     "screens": [

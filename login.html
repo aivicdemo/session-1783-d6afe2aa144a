@@ -25,8 +25,8 @@
     }
 
     html, body {
-      width: 100%;
       height: 100%;
+      width: 100%;
     }
 
     body {
@@ -48,7 +48,7 @@
     .login-card {
       background: white;
       border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 20px rgba(45, 24, 16, 0.08);
       padding: 48px 32px;
       border: 1px solid var(--border);
     }
@@ -60,7 +60,7 @@
 
     .login-logo {
       font-size: 32px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .login-title {
@@ -75,27 +75,34 @@
       color: var(--text-muted);
     }
 
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
     .form-group {
-      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .form-label {
-      display: block;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       color: var(--text);
-      margin-bottom: 8px;
+      letter-spacing: 0.3px;
     }
 
     .form-input {
-      width: 100%;
       padding: 12px 14px;
-      font-size: 14px;
       border: 1px solid var(--border);
       border-radius: 8px;
-      background: #fafaf8;
+      font-size: 14px;
       color: var(--text);
+      background: #fafaf8;
       transition: all 0.2s ease;
+      font-family: inherit;
     }
 
     .form-input:focus {
@@ -110,23 +117,24 @@
     }
 
     .login-button {
-      width: 100%;
       padding: 12px 16px;
-      font-size: 16px;
-      font-weight: 600;
       background: var(--primary);
       color: white;
       border: none;
       border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
-      margin-top: 24px;
+      margin-top: 8px;
+      font-family: inherit;
+      letter-spacing: 0.3px;
     }
 
     .login-button:hover {
       background: var(--primary-hover);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
     }
 
     .login-button:active {
@@ -152,8 +160,8 @@
         font-size: 20px;
       }
 
-      .login-logo {
-        font-size: 28px;
+      .login-container {
+        padding: 16px;
       }
     }
   </style>
@@ -162,20 +170,20 @@
   <div class="login-container">
     <div class="login-card">
       <div class="login-header">
-        <div class="login-logo">🍱</div>
+        <div class="login-logo">🍽️</div>
         <h1 class="login-title" data-testid="login-title">献立くん</h1>
         <p class="login-subtitle">食費管理・最適化システム</p>
       </div>
 
-      <form data-testid="login-form" novalidate>
+      <form class="login-form" data-testid="login-form" novalidate>
         <div class="form-group">
           <label class="form-label" for="username">ユーザー名</label>
           <input
+            class="form-input"
             type="text"
             id="username"
             name="username"
             data-testid="username"
-            class="form-input"
             placeholder="ユーザー名を入力"
             autocomplete="username"
           >
@@ -184,17 +192,21 @@
         <div class="form-group">
           <label class="form-label" for="password">パスワード</label>
           <input
+            class="form-input"
             type="password"
             id="password"
             name="password"
             data-testid="password"
-            class="form-input"
             placeholder="パスワードを入力"
             autocomplete="current-password"
           >
         </div>
 
-        <button type="submit" class="login-button" data-testid="login-button">
+        <button
+          class="login-button"
+          type="submit"
+          data-testid="login-button"
+        >
           ログイン
         </button>
       </form>
