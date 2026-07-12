@@ -41,34 +41,26 @@
 
     .login-container {
       width: 100%;
-      max-width: 400px;
-      padding: 20px;
+      max-width: 420px;
+      padding: 24px;
     }
 
     .login-card {
       background: white;
       border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(45, 24, 16, 0.08), 0 10px 20px rgba(45, 24, 16, 0.12);
+      box-shadow: 0 4px 16px rgba(45, 24, 16, 0.08), 0 2px 8px rgba(45, 24, 16, 0.04);
       padding: 48px 32px;
-      text-align: center;
+      border: 1px solid var(--border);
     }
 
     .login-header {
-      margin-bottom: 32px;
+      text-align: center;
+      margin-bottom: 40px;
     }
 
-    .app-icon {
-      width: 56px;
-      height: 56px;
-      margin: 0 auto 16px;
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      font-weight: bold;
-      color: white;
+    .login-logo {
+      font-size: 32px;
+      margin-bottom: 16px;
     }
 
     .login-title {
@@ -81,40 +73,29 @@
     .login-subtitle {
       font-size: 14px;
       color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    .login-form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 24px;
     }
 
     .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      text-align: left;
+      margin-bottom: 20px;
     }
 
     .form-label {
-      font-size: 13px;
+      display: block;
+      font-size: 14px;
       font-weight: 500;
       color: var(--text);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      margin-bottom: 8px;
     }
 
     .form-input {
+      width: 100%;
       padding: 12px 14px;
+      font-size: 14px;
       border: 1px solid var(--border);
       border-radius: 8px;
-      font-size: 14px;
-      color: var(--text);
       background: #fafaf8;
+      color: var(--text);
       transition: all 0.2s ease;
-      font-family: inherit;
     }
 
     .form-input:focus {
@@ -128,36 +109,36 @@
       color: var(--text-muted);
     }
 
-    .login-button {
+    .submit-button {
+      width: 100%;
       padding: 12px 16px;
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      margin-top: 28px;
+      font-size: 15px;
+      font-weight: 600;
       color: white;
+      background: var(--primary);
       border: none;
       border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-top: 8px;
     }
 
-    .login-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(217, 119, 6, 0.3);
+    .submit-button:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
     }
 
-    .login-button:active {
-      transform: translateY(0);
+    .submit-button:active {
+      transform: scale(0.98);
     }
 
     .login-footer {
+      margin-top: 24px;
+      padding-top: 20px;
       border-top: 1px solid var(--border);
-      padding-top: 16px;
+      text-align: center;
       font-size: 12px;
       color: var(--text-muted);
-      line-height: 1.6;
     }
 
     @media (max-width: 480px) {
@@ -169,8 +150,8 @@
         font-size: 20px;
       }
 
-      .form-input {
-        font-size: 16px;
+      .login-logo {
+        font-size: 28px;
       }
     }
   </style>
@@ -179,43 +160,45 @@
   <div class="login-container">
     <div class="login-card">
       <div class="login-header">
-        <div class="app-icon">🍽️</div>
+        <div class="login-logo">🍽️</div>
         <h1 class="login-title" data-testid="login-title">献立くん</h1>
         <p class="login-subtitle">食費管理・最適化システム</p>
       </div>
 
-      <form class="login-form" data-testid="login-form" novalidate>
+      <form data-testid="login-form" novalidate>
         <div class="form-group">
           <label class="form-label" for="username">ユーザー名</label>
           <input
-            class="form-input"
-            id="username"
             type="text"
+            id="username"
             name="username"
             data-testid="username"
+            class="form-input"
             placeholder="ユーザー名を入力"
+            autocomplete="username"
           >
         </div>
 
         <div class="form-group">
           <label class="form-label" for="password">パスワード</label>
           <input
-            class="form-input"
-            id="password"
             type="password"
+            id="password"
             name="password"
             data-testid="password"
+            class="form-input"
             placeholder="パスワードを入力"
+            autocomplete="current-password"
           >
         </div>
 
-        <button class="login-button" type="submit" data-testid="login-button">
+        <button type="submit" data-testid="login-button" class="submit-button">
           ログイン
         </button>
       </form>
 
       <div class="login-footer">
-        <p>※ サンプル実装ではどの入力でもログインできます</p>
+        ※ サンプル実装ではどの入力でもログインできます
       </div>
     </div>
   </div>
