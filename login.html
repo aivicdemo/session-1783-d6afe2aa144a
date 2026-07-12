@@ -41,14 +41,14 @@
 
     .login-container {
       width: 100%;
-      max-width: 420px;
+      max-width: 400px;
       padding: 20px;
     }
 
     .login-card {
       background: white;
       border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 6px rgba(45, 24, 16, 0.08), 0 10px 20px rgba(45, 24, 16, 0.12);
       padding: 48px 32px;
       text-align: center;
     }
@@ -67,13 +67,13 @@
       align-items: center;
       justify-content: center;
       font-size: 28px;
-      color: white;
       font-weight: bold;
+      color: white;
     }
 
     .login-title {
-      font-size: 28px;
-      font-weight: 700;
+      font-size: 24px;
+      font-weight: 600;
       color: var(--text);
       margin-bottom: 8px;
     }
@@ -81,34 +81,38 @@
     .login-subtitle {
       font-size: 14px;
       color: var(--text-muted);
-      font-weight: 400;
+      line-height: 1.5;
     }
 
     .login-form {
-      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
     .form-group {
-      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
       text-align: left;
     }
 
     .form-label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 13px;
+      font-weight: 500;
       color: var(--text);
-      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .form-input {
-      width: 100%;
       padding: 12px 14px;
-      font-size: 15px;
       border: 1px solid var(--border);
       border-radius: 8px;
-      background: var(--bg-main);
+      font-size: 14px;
       color: var(--text);
+      background: #fafaf8;
       transition: all 0.2s ease;
       font-family: inherit;
     }
@@ -124,38 +128,36 @@
       color: var(--text-muted);
     }
 
-    .submit-button {
-      width: 100%;
+    .login-button {
       padding: 12px 16px;
-      margin-top: 24px;
-      font-size: 15px;
-      font-weight: 600;
-      color: white;
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      color: white;
       border: none;
       border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
-      font-family: inherit;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 8px;
     }
 
-    .submit-button:hover {
+    .login-button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(217, 119, 6, 0.3);
+      box-shadow: 0 6px 12px rgba(217, 119, 6, 0.3);
     }
 
-    .submit-button:active {
+    .login-button:active {
       transform: translateY(0);
-      box-shadow: 0 4px 8px rgba(217, 119, 6, 0.2);
     }
 
     .login-footer {
-      margin-top: 24px;
-      padding-top: 24px;
       border-top: 1px solid var(--border);
+      padding-top: 16px;
       font-size: 12px;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
     @media (max-width: 480px) {
@@ -164,7 +166,7 @@
       }
 
       .login-title {
-        font-size: 24px;
+        font-size: 20px;
       }
 
       .form-input {
@@ -187,8 +189,8 @@
           <label class="form-label" for="username">ユーザー名</label>
           <input
             class="form-input"
-            type="text"
             id="username"
+            type="text"
             name="username"
             data-testid="username"
             placeholder="ユーザー名を入力"
@@ -199,25 +201,21 @@
           <label class="form-label" for="password">パスワード</label>
           <input
             class="form-input"
-            type="password"
             id="password"
+            type="password"
             name="password"
             data-testid="password"
             placeholder="パスワードを入力"
           >
         </div>
 
-        <button
-          class="submit-button"
-          type="submit"
-          data-testid="login-button"
-        >
+        <button class="login-button" type="submit" data-testid="login-button">
           ログイン
         </button>
       </form>
 
       <div class="login-footer">
-        ℹ️ サンプル実装では、どの入力内容でもログインできます。
+        <p>※ サンプル実装ではどの入力でもログインできます</p>
       </div>
     </div>
   </div>
