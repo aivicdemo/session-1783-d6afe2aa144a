@@ -248,245 +248,393 @@ window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {}";
         <div data-aivic-panel="scr-1783678313897" style="display:none"></div>
         <div data-aivic-panel="scr-1783678410041" style="display:none"></div>
         <div data-aivic-panel="scr-1783678463634" style="display:none"></div>
-        <div data-aivic-panel="scr-1783678488970" style="display:block"><div style="display: flex; flex-direction: column; gap: 0; height: 100%; background: var(--bg-main); color: var(--text);">
-  <!-- ヘッダー -->
+        <div data-aivic-panel="scr-1783678488970" style="display:block"><div style="display: flex; flex-direction: column; height: 100%; background: var(--bg-main); color: var(--text);">
+  <!-- ヘッダー / Breadcrumb -->
   <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-card);">
-    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">献立くん / 共通 / 献立生成ロジック更新処理</div>
-    <h1 style="font-size: 18px; font-weight: 600; margin: 0; color: var(--text);">献立生成ロジック更新処理</h1>
+    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">
+      献立くん / 共通 / 献立生成ロジック更新処理
+    </div>
+    <h1 style="font-size: 18px; font-weight: 600; margin: 0; color: var(--text);">
+      献立生成ロジック更新処理
+    </h1>
   </div>
 
   <!-- メインコンテンツ -->
-  <div style="display: flex; flex: 1; gap: 12px; padding: 12px; overflow: hidden;">
+  <div style="display: flex; flex: 1; overflow: hidden; gap: 12px; padding: 12px;">
     
-    <!-- 左パネル: パラメータ調整 -->
-    <div style="flex: 0 0 45%; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 8px;">
+    <!-- 左パネル：パラメータ調整フォーム -->
+    <div style="flex: 0 0 45%; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 14px;">
       
-      <!-- 現在のロジック設定 -->
-      <div class="card" style="padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px;">現在のロジック設定</div>
-        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">
-          <div>バージョン: <span id="logic-version" style="color: var(--text); font-weight: 500;">v1.2.3</span></div>
-          <div>最終更新: <span id="logic-updated" style="color: var(--text); font-weight: 500;">2025-01-15 14:32</span></div>
-          <div>ステータス: <span id="logic-status" style="color: var(--primary); font-weight: 500;">アクティブ</span></div>
+      <!-- 現在のロジック設定表示 -->
+      <div style="margin-bottom: 16px;">
+        <h3 style="font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">
+          現在のロジック設定
+        </h3>
+        <div id="current-logic-display" style="font-size: 12px; color: var(--text-muted); background: var(--bg-main); padding: 8px; border-radius: 4px; border-left: 3px solid var(--primary);">
+          <div>読込中...</div>
         </div>
       </div>
 
-      <!-- 重み付け調整セクション -->
-      <div class="card" style="padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">重み付け調整</div>
-        
-        <!-- アレルギー情報 -->
+      <!-- スライダーセクション -->
+      <div style="margin-bottom: 16px;">
+        <h3 style="font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 12px 0;">
+          重み付け調整
+        </h3>
+
+        <!-- アレルギー情報の重み付け -->
         <div style="margin-bottom: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: 500;">アレルギー情報</label>
-            <span id="allergy-value" style="font-size: 11px; color: var(--primary); font-weight: 600;">0.8</span>
+          <label style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+            アレルギー情報の重み付け
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input 
+              type="range" 
+              id="allergy-weight" 
+              data-testid="allergy-weight-slider"
+              min="0" 
+              max="100" 
+              value="80" 
+              style="flex: 1; cursor: pointer; accent-color: var(--primary);"
+            />
+            <span id="allergy-weight-value" style="font-size: 12px; font-weight: 600; color: var(--primary); min-width: 30px;">80%</span>
           </div>
-          <input type="range" id="allergy-weight" data-testid="allergy-weight-slider" min="0" max="1" step="0.05" value="0.8" style="width: 100%; cursor: pointer; accent-color: var(--primary);">
-          <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">ユーザーのアレルギー情報を献立生成に反映する度合い</div>
         </div>
 
-        <!-- 食事制限情報 -->
+        <!-- 食事制限情報の重み付け -->
         <div style="margin-bottom: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: 500;">食事制限情報</label>
-            <span id="restriction-value" style="font-size: 11px; color: var(--primary); font-weight: 600;">0.75</span>
+          <label style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+            食事制限情報の重み付け
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input 
+              type="range" 
+              id="diet-restriction-weight" 
+              data-testid="diet-restriction-weight-slider"
+              min="0" 
+              max="100" 
+              value="75" 
+              style="flex: 1; cursor: pointer; accent-color: var(--primary);"
+            />
+            <span id="diet-restriction-weight-value" style="font-size: 12px; font-weight: 600; color: var(--primary); min-width: 30px;">75%</span>
           </div>
-          <input type="range" id="restriction-weight" data-testid="restriction-weight-slider" min="0" max="1" step="0.05" value="0.75" style="width: 100%; cursor: pointer; accent-color: var(--primary);">
-          <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">食事制限（ベジタリアン等）の優先度</div>
         </div>
 
-        <!-- 食事評価スコア -->
+        <!-- 食事評価スコアの反映度合い -->
         <div style="margin-bottom: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: 500;">食事評価スコア反映度</label>
-            <span id="rating-value" style="font-size: 11px; color: var(--primary); font-weight: 600;">0.65</span>
+          <label style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+            食事評価スコアの反映度合い
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input 
+              type="range" 
+              id="rating-reflection" 
+              data-testid="rating-reflection-slider"
+              min="0" 
+              max="100" 
+              value="60" 
+              style="flex: 1; cursor: pointer; accent-color: var(--primary);"
+            />
+            <span id="rating-reflection-value" style="font-size: 12px; font-weight: 600; color: var(--primary); min-width: 30px;">60%</span>
           </div>
-          <input type="range" id="rating-weight" data-testid="rating-weight-slider" min="0" max="1" step="0.05" value="0.65" style="width: 100%; cursor: pointer; accent-color: var(--primary);">
-          <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">過去の献立評価を学習に反映する度合い</div>
         </div>
       </div>
 
       <!-- 優先度設定セクション -->
-      <div class="card" style="padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">優先度設定</div>
-        
-        <!-- 季節・旬の食材 -->
-        <div style="margin-bottom: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: 500;">季節・旬の食材優先度</label>
-            <span id="seasonal-value" style="font-size: 11px; color: var(--primary); font-weight: 600;">0.7</span>
+      <div style="margin-bottom: 16px;">
+        <h3 style="font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 12px 0;">
+          優先度設定
+        </h3>
+
+        <!-- 季節・旬の食材優先度 -->
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+            季節・旬の食材優先度
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input 
+              type="range" 
+              id="seasonal-priority" 
+              data-testid="seasonal-priority-slider"
+              min="0" 
+              max="100" 
+              value="70" 
+              style="flex: 1; cursor: pointer; accent-color: var(--primary);"
+            />
+            <span id="seasonal-priority-value" style="font-size: 12px; font-weight: 600; color: var(--primary); min-width: 30px;">70%</span>
           </div>
-          <input type="range" id="seasonal-priority" data-testid="seasonal-priority-slider" min="0" max="1" step="0.05" value="0.7" style="width: 100%; cursor: pointer; accent-color: var(--primary);">
         </div>
 
-        <!-- 栄養バランス -->
-        <div style="margin-bottom: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: 500;">栄養バランス優先度</label>
-            <span id="nutrition-value" style="font-size: 11px; color: var(--primary); font-weight: 600;">0.85</span>
+        <!-- 栄養バランス優先度 -->
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+            栄養バランス優先度
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input 
+              type="range" 
+              id="nutrition-priority" 
+              data-testid="nutrition-priority-slider"
+              min="0" 
+              max="100" 
+              value="85" 
+              style="flex: 1; cursor: pointer; accent-color: var(--primary);"
+            />
+            <span id="nutrition-priority-value" style="font-size: 12px; font-weight: 600; color: var(--primary); min-width: 30px;">85%</span>
           </div>
-          <input type="range" id="nutrition-priority" data-testid="nutrition-priority-slider" min="0" max="1" step="0.05" value="0.85" style="width: 100%; cursor: pointer; accent-color: var(--primary);">
         </div>
 
-        <!-- コスト効率 -->
-        <div style="margin-bottom: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: 500;">コスト効率優先度</label>
-            <span id="cost-value" style="font-size: 11px; color: var(--primary); font-weight: 600;">0.5</span>
+        <!-- コスト効率優先度 -->
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+            コスト効率優先度
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input 
+              type="range" 
+              id="cost-priority" 
+              data-testid="cost-priority-slider"
+              min="0" 
+              max="100" 
+              value="50" 
+              style="flex: 1; cursor: pointer; accent-color: var(--primary);"
+            />
+            <span id="cost-priority-value" style="font-size: 12px; font-weight: 600; color: var(--primary); min-width: 30px;">50%</span>
           </div>
-          <input type="range" id="cost-priority" data-testid="cost-priority-slider" min="0" max="1" step="0.05" value="0.5" style="width: 100%; cursor: pointer; accent-color: var(--primary);">
         </div>
 
-        <!-- 調理時間 -->
-        <div style="margin-bottom: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: 500;">調理時間優先度</label>
-            <span id="cooking-time-value" style="font-size: 11px; color: var(--primary); font-weight: 600;">0.6</span>
+        <!-- 調理時間優先度 -->
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+            調理時間優先度
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input 
+              type="range" 
+              id="cooking-time-priority" 
+              data-testid="cooking-time-priority-slider"
+              min="0" 
+              max="100" 
+              value="65" 
+              style="flex: 1; cursor: pointer; accent-color: var(--primary);"
+            />
+            <span id="cooking-time-priority-value" style="font-size: 12px; font-weight: 600; color: var(--primary); min-width: 30px;">65%</span>
           </div>
-          <input type="range" id="cooking-time-priority" data-testid="cooking-time-priority-slider" min="0" max="1" step="0.05" value="0.6" style="width: 100%; cursor: pointer; accent-color: var(--primary);">
         </div>
       </div>
 
       <!-- 学習有効化セクション -->
-      <div class="card" style="padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">学習設定</div>
-        
+      <div style="margin-bottom: 16px;">
+        <h3 style="font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 10px 0;">
+          学習設定
+        </h3>
+
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-          <input type="checkbox" id="allergy-learning" data-testid="allergy-learning-checkbox" checked style="cursor: pointer; accent-color: var(--primary);">
-          <label for="allergy-learning" style="font-size: 11px; color: var(--text); cursor: pointer;">アレルギー履歴の学習を有効化</label>
+          <input 
+            type="checkbox" 
+            id="allergy-learning" 
+            data-testid="allergy-learning-checkbox"
+            checked 
+            style="cursor: pointer; accent-color: var(--primary);"
+          />
+          <label for="allergy-learning" style="font-size: 12px; color: var(--text); cursor: pointer;">
+            アレルギー履歴の学習を有効化
+          </label>
         </div>
 
         <div style="display: flex; align-items: center; gap: 8px;">
-          <input type="checkbox" id="restriction-learning" data-testid="restriction-learning-checkbox" checked style="cursor: pointer; accent-color: var(--primary);">
-          <label for="restriction-learning" style="font-size: 11px; color: var(--text); cursor: pointer;">食事制限履歴の学習を有効化</label>
+          <input 
+            type="checkbox" 
+            id="diet-learning" 
+            data-testid="diet-learning-checkbox"
+            checked 
+            style="cursor: pointer; accent-color: var(--primary);"
+          />
+          <label for="diet-learning" style="font-size: 12px; color: var(--text); cursor: pointer;">
+            食事制限履歴の学習を有効化
+          </label>
         </div>
       </div>
 
-      <!-- データ取得ボタン -->
-      <button id="fetch-evaluation-data" data-testid="fetch-evaluation-data-button" class="action-btn" style="width: 100%; padding: 8px 12px; font-size: 12px; background: var(--primary); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
-        過去の献立評価データ取得
-      </button>
+      <!-- アクションボタン -->
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto;">
+        <button 
+          id="fetch-evaluation-data-btn" 
+          data-testid="fetch-evaluation-data-button"
+          style="
+            background: var(--primary); 
+            color: #fff; 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: background 0.2s;
+          "
+          onmouseover="this.style.background='var(--primary-hover)'"
+          onmouseout="this.style.background='var(--primary)'"
+        >
+          過去の献立評価データ取得
+        </button>
+
+        <button 
+          id="update-logic-btn" 
+          data-testid="update-logic-button"
+          style="
+            background: var(--primary); 
+            color: #fff; 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: background 0.2s;
+          "
+          onmouseover="this.style.background='var(--primary-hover)'"
+          onmouseout="this.style.background='var(--primary)'"
+        >
+          ロジックを更新
+        </button>
+
+        <button 
+          id="cancel-btn" 
+          data-testid="cancel-button"
+          style="
+            background: transparent; 
+            color: var(--text); 
+            border: 1px solid var(--border); 
+            padding: 8px 12px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.2s;
+          "
+          onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)'"
+          onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text)'"
+        >
+          キャンセル
+        </button>
+      </div>
     </div>
 
-    <!-- 右パネル: プレビュー -->
-    <div style="flex: 0 0 55%; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-left: 8px;">
+    <!-- 右パネル：ロジック更新プレビュー -->
+    <div style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 14px;">
       
-      <!-- ロジック効果プレビュー -->
-      <div class="card" style="padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">ロジック効果プレビュー</div>
-        <canvas id="logic-preview-chart" data-testid="logic-preview-chart" style="width: 100%; height: 180px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main);"></canvas>
-      </div>
+      <h3 style="font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 12px 0;">
+        ロジック更新プレビュー
+      </h3>
 
-      <!-- 優先度バランス表示 -->
-      <div class="card" style="padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">優先度バランス</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-          <div style="padding: 8px; background: var(--bg-main); border-radius: 4px; border-left: 3px solid var(--primary);">
-            <div style="font-size: 10px; color: var(--text-muted);">季節・旬</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text);" id="preview-seasonal">70%</div>
-          </div>
-          <div style="padding: 8px; background: var(--bg-main); border-radius: 4px; border-left: 3px solid var(--primary);">
-            <div style="font-size: 10px; color: var(--text-muted);">栄養バランス</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text);" id="preview-nutrition">85%</div>
-          </div>
-          <div style="padding: 8px; background: var(--bg-main); border-radius: 4px; border-left: 3px solid var(--primary);">
-            <div style="font-size: 10px; color: var(--text-muted);">コスト効率</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text);" id="preview-cost">50%</div>
-          </div>
-          <div style="padding: 8px; background: var(--bg-main); border-radius: 4px; border-left: 3px solid var(--primary);">
-            <div style="font-size: 10px; color: var(--text-muted);">調理時間</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text);" id="preview-cooking-time">60%</div>
+      <!-- プレビューコンテンツ -->
+      <div id="preview-content" style="flex: 1; overflow-y: auto; font-size: 12px; color: var(--text);">
+        
+        <!-- 重み付け配分 -->
+        <div style="margin-bottom: 16px;">
+          <h4 style="font-size: 12px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">
+            重み付け配分
+          </h4>
+          <div style="background: var(--bg-main); padding: 8px; border-radius: 4px; border-left: 3px solid var(--primary);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+              <div>
+                <span style="color: var(--text-muted);">アレルギー:</span>
+                <span id="preview-allergy" style="font-weight: 600; color: var(--primary);">80%</span>
+              </div>
+              <div>
+                <span style="color: var(--text-muted);">食事制限:</span>
+                <span id="preview-diet" style="font-weight: 600; color: var(--primary);">75%</span>
+              </div>
+              <div>
+                <span style="color: var(--text-muted);">評価反映:</span>
+                <span id="preview-rating" style="font-weight: 600; color: var(--primary);">60%</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 重み付け効果表示 -->
-      <div class="card" style="padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">重み付け効果</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-          <div style="padding: 8px; background: var(--bg-main); border-radius: 4px;">
-            <div style="font-size: 10px; color: var(--text-muted);">アレルギー対応</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text);" id="preview-allergy">80%</div>
-          </div>
-          <div style="padding: 8px; background: var(--bg-main); border-radius: 4px;">
-            <div style="font-size: 10px; color: var(--text-muted);">食事制限対応</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text);" id="preview-restriction">75%</div>
-          </div>
-          <div style="padding: 8px; background: var(--bg-main); border-radius: 4px;">
-            <div style="font-size: 10px; color: var(--text-muted);">評価学習度</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text);" id="preview-rating">65%</div>
-          </div>
-          <div style="padding: 8px; background: var(--bg-main); border-radius: 4px;">
-            <div style="font-size: 10px; color: var(--text-muted);">総合スコア</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--primary);" id="preview-total">73%</div>
+        <!-- 優先度配分 -->
+        <div style="margin-bottom: 16px;">
+          <h4 style="font-size: 12px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">
+            優先度配分
+          </h4>
+          <div style="background: var(--bg-main); padding: 8px; border-radius: 4px; border-left: 3px solid var(--primary);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+              <div>
+                <span style="color: var(--text-muted);">季節・旬:</span>
+                <span id="preview-seasonal" style="font-weight: 600; color: var(--primary);">70%</span>
+              </div>
+              <div>
+                <span style="color: var(--text-muted);">栄養:</span>
+                <span id="preview-nutrition" style="font-weight: 600; color: var(--primary);">85%</span>
+              </div>
+              <div>
+                <span style="color: var(--text-muted);">コスト:</span>
+                <span id="preview-cost" style="font-weight: 600; color: var(--primary);">50%</span>
+              </div>
+              <div>
+                <span style="color: var(--text-muted);">調理時間:</span>
+                <span id="preview-cooking" style="font-weight: 600; color: var(--primary);">65%</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 推奨献立プレビュー -->
-      <div class="card" style="padding: 12px; background: var(--bg-card); border: 1px solid var(--border);">
-        <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">推奨献立プレビュー（本日）</div>
-        <div id="preview-menu-list" style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-          <div style="padding: 6px; background: var(--bg-main); border-radius: 3px; border-left: 2px solid var(--primary);">
-            <div style="color: var(--text); font-weight: 500;">朝食: 和風オムレツ定食</div>
-            <div style="color: var(--text-muted); font-size: 10px;">栄養: 高 | コスト: 中 | 調理時間: 15分</div>
+        <!-- 学習設定 -->
+        <div style="margin-bottom: 16px;">
+          <h4 style="font-size: 12px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">
+            学習設定
+          </h4>
+          <div style="background: var(--bg-main); padding: 8px; border-radius: 4px; border-left: 3px solid var(--primary); font-size: 11px;">
+            <div style="margin-bottom: 4px;">
+              <span style="color: var(--text-muted);">アレルギー学習:</span>
+              <span id="preview-allergy-learning" style="font-weight: 600; color: var(--primary);">有効</span>
+            </div>
+            <div>
+              <span style="color: var(--text-muted);">食事制限学習:</span>
+              <span id="preview-diet-learning" style="font-weight: 600; color: var(--primary);">有効</span>
+            </div>
           </div>
-          <div style="padding: 6px; background: var(--bg-main); border-radius: 3px; border-left: 2px solid var(--primary);">
-            <div style="color: var(--text); font-weight: 500;">昼食: 旬の野菜カレー</div>
-            <div style="color: var(--text-muted); font-size: 10px;">栄養: 高 | コスト: 低 | 調理時間: 25分</div>
+        </div>
+
+        <!-- 推定される献立生成改善 -->
+        <div style="margin-bottom: 16px;">
+          <h4 style="font-size: 12px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">
+            推定される献立生成改善
+          </h4>
+          <div style="background: var(--bg-main); padding: 8px; border-radius: 4px; border-left: 3px solid var(--primary); font-size: 11px; line-height: 1.5;">
+            <div style="margin-bottom: 4px;">
+              ✓ アレルギー対応精度: <span id="preview-allergy-accuracy" style="font-weight: 600; color: var(--primary);">高</span>
+            </div>
+            <div style="margin-bottom: 4px;">
+              ✓ 栄養バランス: <span id="preview-nutrition-accuracy" style="font-weight: 600; color: var(--primary);">高</span>
+            </div>
+            <div style="margin-bottom: 4px;">
+              ✓ ユーザー満足度: <span id="preview-satisfaction" style="font-weight: 600; color: var(--primary);">中</span>
+            </div>
+            <div>
+              ✓ 調理実行性: <span id="preview-executability" style="font-weight: 600; color: var(--primary);">中</span>
+            </div>
           </div>
-          <div style="padding: 6px; background: var(--bg-main); border-radius: 3px; border-left: 2px solid var(--primary);">
-            <div style="color: var(--text); font-weight: 500;">夕食: 鮭の塩焼き＆季節野菜</div>
-            <div style="color: var(--text-muted); font-size: 10px;">栄養: 高 | コスト: 中 | 調理時間: 20分</div>
-          </div>
+        </div>
+
+        <!-- 最終確認メッセージ -->
+        <div style="background: var(--bg-main); padding: 8px; border-radius: 4px; border-left: 3px solid var(--primary); font-size: 11px; color: var(--text-muted);">
+          <strong style="color: var(--text);">更新内容:</strong> 上記の設定でロジックを更新します。更新後、新規献立生成から反映されます。
         </div>
       </div>
     </div>
   </div>
-
-  <!-- フッター: アクション -->
-  <div style="padding: 12px 16px; border-top: 1px solid var(--border); background: var(--bg-card); display: flex; gap: 8px; justify-content: flex-end;">
-    <button id="cancel-button" data-testid="cancel-button" class="action-btn secondary" style="padding: 8px 16px; font-size: 12px; background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-weight: 500;">
-      キャンセル
-    </button>
-    <button id="save-button" data-testid="save-button" class="action-btn" style="padding: 8px 16px; font-size: 12px; background: var(--primary); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
-      ロジック更新を保存
-    </button>
-  </div>
 </div>
 
-<!-- 確認ダイアログ -->
-<div id="confirm-dialog" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
-  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 90vw; max-height: 90vh; overflow: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
-    <h2 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0;">ロジック更新を確認</h2>
-    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6;">
-      <p>以下の設定でロジックを更新します。この操作は献立生成に即座に反映されます。</p>
-      <div id="confirm-summary" style="background: var(--bg-main); padding: 8px; border-radius: 4px; margin-top: 8px; font-size: 11px;"></div>
-    </div>
-    <div style="display: flex; gap: 8px; justify-content: flex-end;">
-      <button id="confirm-cancel" data-testid="confirm-cancel-button" class="action-btn secondary" style="padding: 8px 12px; font-size: 12px; background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 4px; cursor: pointer;">
-        キャンセル
-      </button>
-      <button id="confirm-ok" data-testid="confirm-ok-button" class="action-btn" style="padding: 8px 12px; font-size: 12px; background: var(--primary); color: #fff; border: none; border-radius: 4px; cursor: pointer;">
-        更新する
-      </button>
-    </div>
-  </div>
+<!-- 成功メッセージ（初期非表示） -->
+<div id="success-message" style="display: none; position: fixed; bottom: 16px; right: 16px; background: var(--primary); color: #fff; padding: 12px 16px; border-radius: 4px; font-size: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;">
+  ロジックが正常に更新されました
 </div>
 
-<!-- データ取得中ダイアログ -->
-<div id="loading-dialog" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
-  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; text-align: center;">
-    <div style="font-size: 12px; margin-bottom: 12px;">過去の献立評価データを取得中...</div>
-    <div style="width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto;"></div>
-  </div>
-</div>
-
-<style>
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-</style></div>
+<!-- エラーメッセージ（初期非表示） -->
+<div id="error-message" style="display: none; position: fixed; bottom: 16px; right: 16px; background: #dc2626; color: #fff; padding: 12px 16px; border-radius: 4px; font-size: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;">
+  エラーが発生しました
+</div></div>
         <div data-aivic-panel="scr-1783678530168" style="display:none"></div>
         <div data-aivic-panel="scr-1783678782157" style="display:none"></div>
         <div data-aivic-panel="scr-1783761922560" style="display:none"></div>

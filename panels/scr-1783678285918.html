@@ -248,151 +248,178 @@ window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {}";
   <!-- ヘッダー -->
   <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-card);">
     <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">献立くん・共通・アレルギー・食事制限管理画面</div>
-    <h1 style="font-size: 18px; font-weight: 600; margin: 0;">アレルギー・食事制限管理</h1>
+    <h1 style="margin: 0; font-size: 18px; font-weight: 600;">アレルギー・食事制限管理</h1>
   </div>
 
   <!-- KPI カード群 -->
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; padding: 12px 16px; background: var(--bg-main);">
     <div class="card" style="padding: 12px; text-align: center;">
-      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">登録成員数</div>
-      <div style="font-size: 24px; font-weight: 700; color: var(--primary);" data-testid="kpi-members">0</div>
-    </div>
-    <div class="card" style="padding: 12px; text-align: center;">
-      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">アレルギー件数</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">登録済みアレルギー</div>
       <div style="font-size: 24px; font-weight: 700; color: var(--primary);" data-testid="kpi-allergies">0</div>
     </div>
     <div class="card" style="padding: 12px; text-align: center;">
-      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">食事制限件数</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">登録済み食事制限</div>
       <div style="font-size: 24px; font-weight: 700; color: var(--primary);" data-testid="kpi-restrictions">0</div>
     </div>
     <div class="card" style="padding: 12px; text-align: center;">
-      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">重症度「高」</div>
-      <div style="font-size: 24px; font-weight: 700; color: #dc2626;" data-testid="kpi-severe">0</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">対象成員数</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--primary);" data-testid="kpi-members">0</div>
+    </div>
+  </div>
+
+  <!-- グラフ群 -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 16px; background: var(--bg-main);">
+    <div class="card" style="padding: 12px;">
+      <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--text);">重症度別分布</div>
+      <div class="chart-wrap" style="position: relative; height: 200px;">
+        <canvas id="severity-chart"></canvas>
+      </div>
+    </div>
+    <div class="card" style="padding: 12px;">
+      <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--text);">成員別アレルギー件数</div>
+      <div class="chart-wrap" style="position: relative; height: 200px;">
+        <canvas id="member-chart"></canvas>
+      </div>
     </div>
   </div>
 
   <!-- メインコンテンツ -->
-  <div style="display: flex; flex: 1; gap: 12px; padding: 12px 16px; overflow: hidden;">
-    <!-- 左: 家族成員リスト -->
-    <div style="width: 200px; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
-      <div style="padding: 8px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text);">家族成員</div>
-      <div style="flex: 1; overflow-y: auto;">
-        <div id="members-list" style="padding: 4px;"></div>
+  <div style="flex: 1; overflow-y: auto; padding: 12px 16px; background: var(--bg-main);">
+    <div class="card" style="padding: 16px;">
+      <!-- 成員選択 -->
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">対象成員</label>
+        <select id="member-select" data-testid="member-select" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text); font-size: 14px;">
+          <option value="">選択してください</option>
+          <option value="self">本人</option>
+          <option value="spouse">配偶者</option>
+          <option value="child1">子ども1</option>
+          <option value="child2">子ども2</option>
+        </select>
       </div>
-    </div>
 
-    <!-- 右: 詳細管理エリア -->
-    <div style="flex: 1; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
       <!-- タブ -->
-      <div style="display: flex; border-bottom: 1px solid var(--border); background: var(--bg-main);">
-        <button class="tab-btn" data-tab="allergies" style="flex: 1; padding: 10px; border: none; background: transparent; color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid var(--primary);" data-testid="tab-allergies">アレルギー</button>
-        <button class="tab-btn" data-tab="restrictions" style="flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent;" data-testid="tab-restrictions">食事制限</button>
+      <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px;">
+        <button id="tab-allergies" class="tab-btn" data-tab="allergies" style="padding: 8px 12px; border: none; background: transparent; color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid var(--primary); position: relative; bottom: -1px;">
+          アレルギー
+        </button>
+        <button id="tab-restrictions" class="tab-btn" data-tab="restrictions" style="padding: 8px 12px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer;">
+          食事制限
+        </button>
       </div>
 
-      <!-- タブコンテンツ -->
-      <div style="flex: 1; overflow-y: auto; padding: 12px;">
-        <!-- アレルギータブ -->
-        <div id="tab-allergies-content" class="tab-content" style="display: block;">
-          <div style="margin-bottom: 12px;">
-            <button class="action-btn" id="add-allergy-btn" style="width: 100%; padding: 8px; font-size: 13px;" data-testid="add-allergy-button">+ アレルギー追加</button>
-          </div>
-          <div id="allergies-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
-          <div id="allergies-empty" style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px;">アレルギー情報がありません</div>
+      <!-- アレルギータブ -->
+      <div id="tab-content-allergies" class="tab-content" style="display: block;">
+        <div style="margin-bottom: 12px;">
+          <button id="add-allergy-btn" class="action-btn" data-testid="add-allergy-button" style="padding: 8px 12px; font-size: 13px;">+ アレルギー追加</button>
         </div>
+        <div class="table-wrap" style="overflow-x: auto;">
+          <table data-testid="allergy-list" style="width: 100%; font-size: 13px; border-collapse: collapse;">
+            <thead>
+              <tr style="background: var(--bg-sidebar); border-bottom: 1px solid var(--border);">
+                <th style="padding: 8px; text-align: left; color: var(--text); font-weight: 600; border-right: 1px solid var(--border);">アレルギー名</th>
+                <th style="padding: 8px; text-align: left; color: var(--text); font-weight: 600; border-right: 1px solid var(--border);">重症度</th>
+                <th style="padding: 8px; text-align: left; color: var(--text); font-weight: 600; border-right: 1px solid var(--border);">発症日</th>
+                <th style="padding: 8px; text-align: center; color: var(--text); font-weight: 600;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="allergy-tbody">
+              <!-- 動的に生成 -->
+            </tbody>
+          </table>
+        </div>
+        <div id="allergy-empty" style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">
+          成員を選択してください
+        </div>
+      </div>
 
-        <!-- 食事制限タブ -->
-        <div id="tab-restrictions-content" class="tab-content" style="display: none;">
-          <div style="margin-bottom: 12px;">
-            <button class="action-btn" id="add-restriction-btn" style="width: 100%; padding: 8px; font-size: 13px;" data-testid="add-restriction-button">+ 食事制限追加</button>
-          </div>
-          <div id="restrictions-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
-          <div id="restrictions-empty" style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px;">食事制限がありません</div>
+      <!-- 食事制限タブ -->
+      <div id="tab-content-restrictions" class="tab-content" style="display: none;">
+        <div style="margin-bottom: 12px;">
+          <button id="add-restriction-btn" class="action-btn" data-testid="add-restriction-button" style="padding: 8px 12px; font-size: 13px;">+ 食事制限追加</button>
+        </div>
+        <div class="table-wrap" style="overflow-x: auto;">
+          <table data-testid="restriction-list" style="width: 100%; font-size: 13px; border-collapse: collapse;">
+            <thead>
+              <tr style="background: var(--bg-sidebar); border-bottom: 1px solid var(--border);">
+                <th style="padding: 8px; text-align: left; color: var(--text); font-weight: 600; border-right: 1px solid var(--border);">制限内容</th>
+                <th style="padding: 8px; text-align: left; color: var(--text); font-weight: 600; border-right: 1px solid var(--border);">理由</th>
+                <th style="padding: 8px; text-align: left; color: var(--text); font-weight: 600; border-right: 1px solid var(--border);">開始日</th>
+                <th style="padding: 8px; text-align: center; color: var(--text); font-weight: 600;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="restriction-tbody">
+              <!-- 動的に生成 -->
+            </tbody>
+          </table>
+        </div>
+        <div id="restriction-empty" style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">
+          成員を選択してください
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- モーダル: アレルギー追加・編集 -->
+<!-- モーダル: アレルギー追加/編集 -->
 <div id="allergy-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
   <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
-    <h2 style="font-size: 16px; font-weight: 600; margin: 0 0 16px 0;" id="allergy-modal-title">アレルギー追加</h2>
-    
+    <h2 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">アレルギー情報</h2>
     <div style="margin-bottom: 12px;">
-      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">成員名</label>
-      <input id="allergy-member-name" type="text" readonly style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;" />
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">アレルギー名 *</label>
+      <input id="allergy-name-input" data-testid="allergy-name-input" type="text" placeholder="例: 卵" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;" />
     </div>
-
     <div style="margin-bottom: 12px;">
-      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">アレルギー名 *</label>
-      <input id="allergy-name" type="text" placeholder="例: 卵、牛乳、ピーナッツ" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text); font-size: 13px; box-sizing: border-box;" data-testid="allergy-name-input" />
-    </div>
-
-    <div style="margin-bottom: 12px;">
-      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">重症度 *</label>
-      <select id="allergy-severity" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text); font-size: 13px; box-sizing: border-box;" data-testid="allergy-severity-select">
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">重症度 *</label>
+      <select id="allergy-severity-input" data-testid="allergy-severity-input" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;">
         <option value="">選択してください</option>
-        <option value="軽">軽</option>
-        <option value="中">中</option>
-        <option value="高">高</option>
+        <option value="mild">軽度</option>
+        <option value="moderate">中度</option>
+        <option value="severe">重度</option>
       </select>
     </div>
-
     <div style="margin-bottom: 16px;">
-      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">発症日</label>
-      <input id="allergy-onset-date" type="date" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text); font-size: 13px; box-sizing: border-box;" data-testid="allergy-onset-date-input" />
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">発症日</label>
+      <input id="allergy-date-input" data-testid="allergy-date-input" type="date" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;" />
     </div>
-
     <div style="display: flex; gap: 8px; justify-content: flex-end;">
-      <button class="action-btn secondary" id="allergy-modal-cancel" style="padding: 8px 16px; font-size: 13px;" data-testid="allergy-cancel-button">キャンセル</button>
-      <button class="action-btn" id="allergy-modal-save" style="padding: 8px 16px; font-size: 13px;" data-testid="allergy-save-button">保存</button>
+      <button id="allergy-cancel-btn" class="action-btn secondary" data-testid="allergy-cancel-button" style="padding: 8px 12px; font-size: 13px;">キャンセル</button>
+      <button id="allergy-save-btn" class="action-btn" data-testid="allergy-save-button" style="padding: 8px 12px; font-size: 13px;">保存</button>
     </div>
   </div>
 </div>
 
-<!-- モーダル: 食事制限追加・編集 -->
+<!-- モーダル: 食事制限追加/編集 -->
 <div id="restriction-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
   <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
-    <h2 style="font-size: 16px; font-weight: 600; margin: 0 0 16px 0;" id="restriction-modal-title">食事制限追加</h2>
-    
+    <h2 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">食事制限情報</h2>
     <div style="margin-bottom: 12px;">
-      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">成員名</label>
-      <input id="restriction-member-name" type="text" readonly style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;" />
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">制限内容 *</label>
+      <input id="restriction-content-input" data-testid="restriction-content-input" type="text" placeholder="例: 乳製品不可" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;" />
     </div>
-
     <div style="margin-bottom: 12px;">
-      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">制限種別 *</label>
-      <select id="restriction-type" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text); font-size: 13px; box-sizing: border-box;" data-testid="restriction-type-select">
-        <option value="">選択してください</option>
-        <option value="ベジタリアン">ベジタリアン</option>
-        <option value="ヴィーガン">ヴィーガン</option>
-        <option value="ハラール">ハラール</option>
-        <option value="コーシャー">コーシャー</option>
-        <option value="グルテンフリー">グルテンフリー</option>
-        <option value="その他">その他</option>
-      </select>
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">理由</label>
+      <input id="restriction-reason-input" data-testid="restriction-reason-input" type="text" placeholder="例: 乳糖不耐症" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;" />
     </div>
-
-    <div style="margin-bottom: 12px;">
-      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">詳細説明</label>
-      <textarea id="restriction-notes" placeholder="例: 豚肉のみ避ける" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text); font-size: 13px; box-sizing: border-box; resize: vertical; min-height: 60px;" data-testid="restriction-notes-input"></textarea>
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">開始日</label>
+      <input id="restriction-date-input" data-testid="restriction-date-input" type="date" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;" />
     </div>
-
     <div style="display: flex; gap: 8px; justify-content: flex-end;">
-      <button class="action-btn secondary" id="restriction-modal-cancel" style="padding: 8px 16px; font-size: 13px;" data-testid="restriction-cancel-button">キャンセル</button>
-      <button class="action-btn" id="restriction-modal-save" style="padding: 8px 16px; font-size: 13px;" data-testid="restriction-save-button">保存</button>
+      <button id="restriction-cancel-btn" class="action-btn secondary" data-testid="restriction-cancel-button" style="padding: 8px 12px; font-size: 13px;">キャンセル</button>
+      <button id="restriction-save-btn" class="action-btn" data-testid="restriction-save-button" style="padding: 8px 12px; font-size: 13px;">保存</button>
     </div>
   </div>
 </div>
 
 <!-- モーダル: 削除確認 -->
 <div id="delete-confirm-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
-  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 350px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
-    <h2 style="font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">削除確認</h2>
-    <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 20px 0;" id="delete-confirm-message">この項目を削除してもよろしいですか？</p>
+  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 320px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+    <h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">削除確認</h2>
+    <p id="delete-confirm-message" style="margin: 0 0 20px 0; font-size: 13px; color: var(--text-muted);">本当に削除しますか？</p>
     <div style="display: flex; gap: 8px; justify-content: flex-end;">
-      <button class="action-btn secondary" id="delete-confirm-cancel" style="padding: 8px 16px; font-size: 13px;" data-testid="delete-cancel-button">キャンセル</button>
-      <button id="delete-confirm-ok" style="padding: 8px 16px; font-size: 13px; background: #dc2626; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;" data-testid="delete-confirm-button">削除</button>
+      <button id="delete-cancel-btn" class="action-btn secondary" data-testid="delete-cancel-button" style="padding: 8px 12px; font-size: 13px;">キャンセル</button>
+      <button id="delete-confirm-btn" class="action-btn" data-testid="delete-confirm-button" style="padding: 8px 12px; font-size: 13px; background: #dc2626; color: #fff;">削除</button>
     </div>
   </div>
 </div></div>

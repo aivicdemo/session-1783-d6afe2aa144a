@@ -185,7 +185,7 @@ window.AIVIC_SYSTEM_NAME = "共通";
 window.AIVIC_TABLES = [];
 window.AIVIC_PRESET_SEED = {};
 window.AIVIC_PAGE_SCREEN_ID = "scr-1783678463634";
-window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {\n  const form = container.querySelector('#priority-form');\n  const previewContent = container.querySelector('#preview-content');\n  const saveBtn = container.querySelector('#save-btn');\n  const resetBtn = container.querySelector('#reset-btn');\n  \n  // スライダー値表示の更新\n  const sliders = {\n    'allergy-priority': 'allergy-value',\n    'restriction-priority': 'restriction-value',\n    'rating-weight': 'rating-value',\n    'nutrition-priority': 'nutrition-value'\n  };\n  \n  Object.entries(sliders).forEach(([sliderId, valueId]) => {\n    const slider = container.querySelector(`#${sliderId}`);\n    const valueSpan = container.querySelector(`#${valueId}`);\n    if (slider && valueSpan) {\n      slider.addEventListener('input', (e) => {\n        valueSpan.textContent = e.target.value + '%';\n        updatePreview();\n      });\n    }\n  });\n\n  // フォーム入力時のプレビュー更新\n  form.addEventListener('change', updatePreview);\n  form.addEventListener('input', updatePreview);\n\n  // プレビュー更新関数\n  function updatePreview() {\n    const userSelect = container.querySelector('#user-select');\n    const familySelect = container.querySelector('#family-select');\n    const allergyPriority = container.querySelector('#allergy-priority').value;\n    const restrictionPriority = container.querySelector('#restriction-priority').value;\n    const ratingWeight = container.querySelector('#rating-weight').value;\n    const nutritionPriority = container.querySelector('#nutrition-priority').value;\n    const budgetLimit = container.querySelector('#budget-limit').value;\n    const cookingTimeLimit = container.querySelector('#cooking-time-limit').value;\n    const excludedIngredientsText = container.querySelector('#excluded-ingredients').value;\n    const generationFrequency = container.querySelector('input[name=\"generationFrequency\"]:checked').value;\n\n    // 選択された好み\n    const preferences = Array.from(container.querySelectorAll('input[name=\"preference\"]:checked'))\n      .map(cb => {\n        const labels = { fish: '魚類', meat: '肉類', vegetable: '野菜', soy: '大豆製品', grain: '穀類', dairy: '乳製品' };\n        return labels[cb.value];\n      });\n\n    // 除外食材をパース\n    const excludedIngredients = excludedIngredientsText\n      .split(',')\n      .map(s => s.trim())\n      .filter(s => s.length > 0);\n\n    const previewObj = {\n      user: userSelect.value ? userSelect.options[userSelect.selectedIndex].text : '未選択',\n      familyMember: familySelect.value ? familySelect.options[familySelect.selectedIndex].text : '全員',\n      priorities: {\n        allergy: parseInt(allergyPriority),\n        restriction: parseInt(restrictionPriority),\n        rating: parseInt(ratingWeight),\n        nutrition: parseInt(nutritionPriority)\n      },\n      constraints: {\n        budgetPerMeal: parseInt(budgetLimit),\n        cookingTimeLimit: parseInt(cookingTimeLimit)\n      },\n      preferences: preferences,\n      excludedIngredients: excludedIngredients,\n      generationFrequency: generationFrequency\n    };\n\n    previewContent.textContent = JSON.stringify(previewObj, null, 2);\n  }\n\n  // 保存ボタン\n  saveBtn.addEventListener('click', async () => {\n    const formData = new FormData(form);\n    const data = {\n      userId: formData.get('userId'),\n      familyMemberId: formData.get('familyMemberId'),\n      allergyPriority: parseInt(formData.get('allergyPriority')),\n      restrictionPriority: parseInt(formData.get('restrictionPriority')),\n      ratingWeight: parseInt(formData.get('ratingWeight')),\n      nutritionPriority: parseInt(formData.get('nutritionPriority')),\n      budgetLimit: parseInt(formData.get('budgetLimit')),\n      cookingTimeLimit: parseInt(formData.get('cookingTimeLimit')),\n      preferences: Array.from(container.querySelectorAll('input[name=\"preference\"]:checked')).map(cb => cb.value),\n      excludedIngredients: formData.get('excludedIngredients').split(',').map(s => s.trim()).filter(s => s),\n      generationFrequency: formData.get('generationFrequency')\n    };\n\n    if (!data.userId) {\n      alert('ユーザーを選択してください');\n      return;\n    }\n\n    const saved = await window.aivicApi.save(0, data);\n    if (saved) {\n      alert('優先条件を保存しました');\n    }\n  });\n\n  // リセットボタン\n  resetBtn.addEventListener('click', () => {\n    if (confirm('設定をリセットしますか？')) {\n      form.reset();\n      container.querySelector('#allergy-priority').value = 90;\n      container.querySelector('#restriction-priority').value = 85;\n      container.querySelector('#rating-weight').value = 70;\n      container.querySelector('#nutrition-priority').value = 75;\n      container.querySelector('#budget-limit').value = 800;\n      container.querySelector('#cooking-time-limit').value = 45;\n      container.querySelector('input[name=\"generationFrequency\"][value=\"daily\"]').checked = true;\n      container.querySelector('input[name=\"preference\"][value=\"vegetable\"]').checked = true;\n      container.querySelector('input[name=\"preference\"][value=\"soy\"]').checked = true;\n      container.querySelector('input[name=\"preference\"][value=\"grain\"]').checked = true;\n      updatePreview();\n    }\n  });\n\n  // 関連画面へのナビゲーション\n  container.querySelector('[data-testid=\"allergy-management-btn\"]').addEventListener('click', () => {\n    window.showScreen('scr-1783678285918');\n  });\n\n  container.querySelector('[data-testid=\"generation-log-btn\"]').addEventListener('click', () => {\n    window.showScreen('scr-1783678313897');\n  });\n\n  container.querySelector('[data-testid=\"improvement-proposal-btn\"]').addEventListener('click', () => {\n    window.showScreen('scr-1783678782157');\n  });\n\n  // 初期プレビュー表示\n  updatePreview();\n}";
+window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {}";
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -250,233 +250,289 @@ window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {\n  const form
         <div data-aivic-panel="scr-1783678463634" style="display:block"><div style="display: flex; flex-direction: column; height: 100%; background: var(--bg-main); color: var(--text);">
   <!-- ヘッダー -->
   <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-card);">
-    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">献立くん・共通・優先条件設定画面</div>
-    <h1 style="font-size: 20px; font-weight: 600; margin: 0;">優先条件設定</h1>
+    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">献立くん / 共通 / 優先条件設定画面</div>
+    <h1 style="margin: 0; font-size: 20px; font-weight: 600;">優先条件設定</h1>
   </div>
 
   <!-- メインコンテンツ -->
   <div style="display: flex; flex: 1; overflow: hidden; gap: 16px; padding: 16px;">
     
-    <!-- 左パネル: 入力フォーム -->
-    <div style="flex: 0 0 45%; overflow-y: auto; padding-right: 8px;">
-      <form id="priority-form" style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- 左パネル: フォーム入力 -->
+    <div style="flex: 0 0 45%; overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 16px;">
+      <form id="priority-form" style="display: flex; flex-direction: column; gap: 16px;">
         
-        <!-- ユーザー・家族成員選択 -->
-        <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div>
-              <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">ユーザー</label>
-              <select id="user-select" data-testid="user-select" name="userId" style="width: 100%; padding: 8px; border: 1px solid rgba(139, 125, 107, 0.3); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px;">
-                <option value="">選択してください</option>
-                <option value="user-001">太郎（本人）</option>
-                <option value="user-002">花子（配偶者）</option>
-                <option value="user-003">次郎（子）</option>
-              </select>
-            </div>
-            <div>
-              <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">家族成員</label>
-              <select id="family-select" data-testid="family-select" name="familyMemberId" style="width: 100%; padding: 8px; border: 1px solid rgba(139, 125, 107, 0.3); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px;">
-                <option value="">全員</option>
-                <option value="member-001">太郎</option>
-                <option value="member-002">花子</option>
-                <option value="member-003">次郎</option>
-              </select>
-            </div>
+        <!-- ユーザー選択 -->
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">ユーザー選択</label>
+          <select data-testid="user-select" name="userId" style="width: 100%; padding: 8px 10px; border: 1px solid rgba(139, 125, 107, 0.3); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 14px;">
+            <option value="">選択してください</option>
+            <option value="user-001">太郎（本人）</option>
+            <option value="user-002">花子（配偶者）</option>
+            <option value="user-003">次郎（子）</option>
+          </select>
+        </div>
+
+        <!-- 家族成員選択 -->
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">家族成員選択</label>
+          <select data-testid="family-member-select" name="familyMemberId" style="width: 100%; padding: 8px 10px; border: 1px solid rgba(139, 125, 107, 0.3); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 14px;">
+            <option value="">全員</option>
+            <option value="member-001">太郎</option>
+            <option value="member-002">花子</option>
+            <option value="member-003">次郎</option>
+          </select>
+        </div>
+
+        <!-- セクション区切り -->
+        <div style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;">
+          <h3 style="margin: 0 0 12px 0; font-size: 13px; font-weight: 600; color: var(--text);">優先度設定</h3>
+        </div>
+
+        <!-- アレルギー情報優先度 -->
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">アレルギー情報優先度</label>
+          <div style="display: flex; gap: 8px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="radio" name="allergyPriority" value="high" style="accent-color: var(--primary);" />
+              <span>高</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="radio" name="allergyPriority" value="medium" checked style="accent-color: var(--primary);" />
+              <span>中</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="radio" name="allergyPriority" value="low" style="accent-color: var(--primary);" />
+              <span>低</span>
+            </label>
           </div>
         </div>
 
-        <!-- 優先度設定セクション -->
+        <!-- 食事制限情報優先度 -->
         <div>
-          <h3 style="font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">優先度設定</h3>
-          
-          <!-- アレルギー情報優先度 -->
-          <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px;">
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">アレルギー情報優先度</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <input type="range" id="allergy-priority" data-testid="allergy-priority" name="allergyPriority" min="0" max="100" value="90" style="flex: 1; accent-color: var(--primary);">
-              <span id="allergy-value" style="font-size: 12px; color: var(--text); min-width: 30px; text-align: right;">90%</span>
-            </div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">高いほど献立生成時にアレルギーを厳密に除外</div>
-          </div>
-
-          <!-- 食事制限情報優先度 -->
-          <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px;">
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">食事制限情報優先度</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <input type="range" id="restriction-priority" data-testid="restriction-priority" name="restrictionPriority" min="0" max="100" value="85" style="flex: 1; accent-color: var(--primary);">
-              <span id="restriction-value" style="font-size: 12px; color: var(--text); min-width: 30px; text-align: right;">85%</span>
-            </div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">ベジタリアン・低塩分など制限を優先度</div>
-          </div>
-
-          <!-- 食事評価の重み付け -->
-          <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px;">
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">食事評価の重み付け</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <input type="range" id="rating-weight" data-testid="rating-weight" name="ratingWeight" min="0" max="100" value="70" style="flex: 1; accent-color: var(--primary);">
-              <span id="rating-value" style="font-size: 12px; color: var(--text); min-width: 30px; text-align: right;">70%</span>
-            </div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">過去の評価スコアを献立選択に反映</div>
-          </div>
-
-          <!-- 栄養バランス優先度 -->
-          <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">栄養バランス優先度</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <input type="range" id="nutrition-priority" data-testid="nutrition-priority" name="nutritionPriority" min="0" max="100" value="75" style="flex: 1; accent-color: var(--primary);">
-              <span id="nutrition-value" style="font-size: 12px; color: var(--text); min-width: 30px; text-align: right;">75%</span>
-            </div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">タンパク質・炭水化物・脂質のバランス</div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">食事制限情報優先度</label>
+          <div style="display: flex; gap: 8px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="radio" name="restrictionPriority" value="high" style="accent-color: var(--primary);" />
+              <span>高</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="radio" name="restrictionPriority" value="medium" checked style="accent-color: var(--primary);" />
+              <span>中</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="radio" name="restrictionPriority" value="low" style="accent-color: var(--primary);" />
+              <span>低</span>
+            </label>
           </div>
         </div>
 
-        <!-- 制約条件セクション -->
+        <!-- 食事評価の重み付け -->
         <div>
-          <h3 style="font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">制約条件</h3>
-          
-          <!-- 予算制限 -->
-          <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px;">
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">1食あたりの予算上限（円）</label>
-            <input type="number" id="budget-limit" data-testid="budget-limit" name="budgetLimit" min="0" max="5000" value="800" style="width: 100%; padding: 8px; border: 1px solid rgba(139, 125, 107, 0.3); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px;">
-          </div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">食事評価の重み付け (%)</label>
+          <input data-testid="rating-weight-input" type="number" name="ratingWeight" min="0" max="100" value="50" style="width: 100%; padding: 8px 10px; border: 1px solid rgba(139, 125, 107, 0.3); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 14px;" />
+        </div>
 
-          <!-- 調理時間制限 -->
-          <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">調理時間上限（分）</label>
-            <input type="number" id="cooking-time-limit" data-testid="cooking-time-limit" name="cookingTimeLimit" min="0" max="180" value="45" style="width: 100%; padding: 8px; border: 1px solid rgba(139, 125, 107, 0.3); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px;">
+        <!-- 栄養バランス優先度スライダー -->
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">栄養バランス優先度</label>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <input data-testid="nutrition-slider" type="range" name="nutritionPriority" min="0" max="100" value="70" style="flex: 1; accent-color: var(--primary);" />
+            <span id="nutrition-value" style="font-size: 13px; color: var(--text); min-width: 30px; text-align: right;">70%</span>
           </div>
         </div>
 
-        <!-- 食材の好み -->
+        <!-- セクション区切り -->
+        <div style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;">
+          <h3 style="margin: 0 0 12px 0; font-size: 13px; font-weight: 600; color: var(--text);">制約条件</h3>
+        </div>
+
+        <!-- 予算制限 -->
         <div>
-          <h3 style="font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">食材の好み</h3>
-          <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
-                <input type="checkbox" name="preference" value="fish" style="accent-color: var(--primary);">
-                <span>魚類</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
-                <input type="checkbox" name="preference" value="meat" style="accent-color: var(--primary);">
-                <span>肉類</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
-                <input type="checkbox" name="preference" value="vegetable" checked style="accent-color: var(--primary);">
-                <span>野菜</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
-                <input type="checkbox" name="preference" value="soy" checked style="accent-color: var(--primary);">
-                <span>大豆製品</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
-                <input type="checkbox" name="preference" value="grain" checked style="accent-color: var(--primary);">
-                <span>穀類</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
-                <input type="checkbox" name="preference" value="dairy" style="accent-color: var(--primary);">
-                <span>乳製品</span>
-              </label>
-            </div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">予算制限（1食あたり、円）</label>
+          <input data-testid="budget-input" type="number" name="budgetLimit" min="0" value="500" style="width: 100%; padding: 8px 10px; border: 1px solid rgba(139, 125, 107, 0.3); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 14px;" />
+        </div>
+
+        <!-- 調理時間制限 -->
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">調理時間制限（分）</label>
+          <input data-testid="cooking-time-input" type="number" name="cookingTimeLimit" min="0" value="30" style="width: 100%; padding: 8px 10px; border: 1px solid rgba(139, 125, 107, 0.3); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 14px;" />
+        </div>
+
+        <!-- セクション区切り -->
+        <div style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;">
+          <h3 style="margin: 0 0 12px 0; font-size: 13px; font-weight: 600; color: var(--text);">食材の好み</h3>
+        </div>
+
+        <!-- 食材の好み設定チェックボックスグループ -->
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">好きな食材</label>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="checkbox" name="preferredIngredients" value="fish" style="accent-color: var(--primary);" />
+              <span>魚</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="checkbox" name="preferredIngredients" value="chicken" checked style="accent-color: var(--primary);" />
+              <span>鶏肉</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="checkbox" name="preferredIngredients" value="beef" style="accent-color: var(--primary);" />
+              <span>牛肉</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="checkbox" name="preferredIngredients" value="vegetables" checked style="accent-color: var(--primary);" />
+              <span>野菜</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="checkbox" name="preferredIngredients" value="tofu" style="accent-color: var(--primary);" />
+              <span>豆腐</span>
+            </label>
           </div>
         </div>
 
-        <!-- 除外食材 -->
+        <!-- 除外食材リスト -->
         <div>
-          <h3 style="font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">除外食材</h3>
-          <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">除外する食材（カンマ区切り）</label>
-            <textarea id="excluded-ingredients" data-testid="excluded-ingredients" name="excludedIngredients" placeholder="例: ナッツ, キウイ, 貝類" style="width: 100%; padding: 8px; border: 1px solid rgba(139, 125, 107, 0.3); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; resize: vertical; min-height: 60px;"></textarea>
-          </div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">除外食材（カンマ区切り）</label>
+          <textarea data-testid="excluded-ingredients-input" name="excludedIngredients" placeholder="例: 納豆, しいたけ, くるみ" style="width: 100%; padding: 8px 10px; border: 1px solid rgba(139, 125, 107, 0.3); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; resize: vertical; min-height: 60px;"></textarea>
+        </div>
+
+        <!-- セクション区切り -->
+        <div style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;">
+          <h3 style="margin: 0 0 12px 0; font-size: 13px; font-weight: 600; color: var(--text);">献立生成設定</h3>
         </div>
 
         <!-- 献立生成頻度 -->
         <div>
-          <h3 style="font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">献立生成頻度</h3>
-          <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
-                <input type="radio" name="generationFrequency" value="daily" checked style="accent-color: var(--primary);">
-                <span>毎日</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
-                <input type="radio" name="generationFrequency" value="weekly" style="accent-color: var(--primary);">
-                <span>週単位（日曜に1週間分）</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
-                <input type="radio" name="generationFrequency" value="monthly" style="accent-color: var(--primary);">
-                <span>月単位（1日に1ヶ月分）</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
-                <input type="radio" name="generationFrequency" value="manual" style="accent-color: var(--primary);">
-                <span>手動生成のみ</span>
-              </label>
-            </div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">献立生成頻度</label>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="radio" name="generationFrequency" value="daily" checked style="accent-color: var(--primary);" />
+              <span>毎日</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="radio" name="generationFrequency" value="weekly" style="accent-color: var(--primary);" />
+              <span>週1回（日曜夜）</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+              <input type="radio" name="generationFrequency" value="manual" style="accent-color: var(--primary);" />
+              <span>手動</span>
+            </label>
           </div>
         </div>
 
+        <!-- ボタン群 -->
+        <div style="display: flex; gap: 8px; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
+          <button data-testid="save-button" type="submit" class="action-btn" style="flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border-radius: 4px; cursor: pointer;">保存</button>
+          <button data-testid="cancel-button" type="button" class="action-btn secondary" style="flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border-radius: 4px; cursor: pointer;">キャンセル</button>
+        </div>
+
+        <!-- 管理画面リンク -->
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button data-testid="manage-allergies-button" type="button" class="action-btn secondary" style="flex: 1; padding: 8px; font-size: 12px; border-radius: 4px; cursor: pointer;">アレルギー管理</button>
+          <button data-testid="view-logs-button" type="button" class="action-btn secondary" style="flex: 1; padding: 8px; font-size: 12px; border-radius: 4px; cursor: pointer;">生成ログ</button>
+        </div>
       </form>
     </div>
 
     <!-- 右パネル: プレビュー -->
-    <div style="flex: 0 0 55%; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 8px;">
+    <div style="flex: 1; overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 16px;">
+      <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: var(--text);">優先条件プレビュー</h2>
       
-      <!-- プレビューヘッダー -->
-      <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-        <h3 style="font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">優先条件プレビュー</h3>
-        <div style="font-size: 11px; color: var(--text-muted);">設定内容がリアルタイムで反映されます</div>
-      </div>
+      <div id="preview-content" style="display: flex; flex-direction: column; gap: 12px;">
+        <!-- ユーザー情報 -->
+        <div style="background: var(--bg-main); padding: 10px; border-radius: 4px; border-left: 3px solid var(--primary);">
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">対象ユーザー</div>
+          <div id="preview-user" style="font-size: 13px; font-weight: 500; color: var(--text);">未選択</div>
+        </div>
 
-      <!-- プレビューコンテンツ -->
-      <div id="preview-content" style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border); flex: 1; overflow-y: auto; font-family: 'Monaco', 'Courier New', monospace; font-size: 11px; color: var(--text); white-space: pre-wrap; word-break: break-word; line-height: 1.5;">
-        {
-  "user": "未選択",
-  "familyMember": "全員",
-  "priorities": {
-    "allergy": 90,
-    "restriction": 85,
-    "rating": 70,
-    "nutrition": 75
-  },
-  "constraints": {
-    "budgetPerMeal": 800,
-    "cookingTimeLimit": 45
-  },
-  "preferences": ["野菜", "大豆製品", "穀類"],
-  "excludedIngredients": [],
-  "generationFrequency": "daily"
-}
-      </div>
+        <!-- 優先度サマリー -->
+        <div style="background: var(--bg-main); padding: 10px; border-radius: 4px;">
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">優先度設定</div>
+          <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 4px 0; color: var(--text-muted);">アレルギー</td>
+              <td style="padding: 4px 0; text-align: right; color: var(--text); font-weight: 500;" id="preview-allergy">中</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 4px 0; color: var(--text-muted);">食事制限</td>
+              <td style="padding: 4px 0; text-align: right; color: var(--text); font-weight: 500;" id="preview-restriction">中</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 4px 0; color: var(--text-muted);">食事評価</td>
+              <td style="padding: 4px 0; text-align: right; color: var(--text); font-weight: 500;" id="preview-rating">50%</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: var(--text-muted);">栄養バランス</td>
+              <td style="padding: 4px 0; text-align: right; color: var(--text); font-weight: 500;" id="preview-nutrition">70%</td>
+            </tr>
+          </table>
+        </div>
 
-      <!-- 関連画面へのリンク -->
-      <div style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-        <h4 style="font-size: 12px; font-weight: 600; color: var(--text); margin: 0 0 8px 0;">関連設定</h4>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <button class="action-btn secondary" data-testid="allergy-management-btn" style="padding: 8px 12px; font-size: 12px; text-align: left;">
-            → アレルギー・食事制限管理
-          </button>
-          <button class="action-btn secondary" data-testid="generation-log-btn" style="padding: 8px 12px; font-size: 12px; text-align: left;">
-            → 献立生成ログ・監視
-          </button>
-          <button class="action-btn secondary" data-testid="improvement-proposal-btn" style="padding: 8px 12px; font-size: 12px; text-align: left;">
-            → 改善提案優先度設定
-          </button>
+        <!-- 制約条件 -->
+        <div style="background: var(--bg-main); padding: 10px; border-radius: 4px;">
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">制約条件</div>
+          <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 4px 0; color: var(--text-muted);">予算上限</td>
+              <td style="padding: 4px 0; text-align: right; color: var(--text); font-weight: 500;" id="preview-budget">500円</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: var(--text-muted);">調理時間</td>
+              <td style="padding: 4px 0; text-align: right; color: var(--text); font-weight: 500;" id="preview-cooking-time">30分</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- 食材設定 -->
+        <div style="background: var(--bg-main); padding: 10px; border-radius: 4px;">
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">食材設定</div>
+          <div style="margin-bottom: 8px;">
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">好きな食材</div>
+            <div id="preview-preferred" style="font-size: 12px; color: var(--text); line-height: 1.4;">鶏肉, 野菜</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">除外食材</div>
+            <div id="preview-excluded" style="font-size: 12px; color: var(--text); line-height: 1.4;">未設定</div>
+          </div>
+        </div>
+
+        <!-- 生成設定 -->
+        <div style="background: var(--bg-main); padding: 10px; border-radius: 4px;">
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">献立生成設定</div>
+          <div style="font-size: 12px; color: var(--text);">
+            <span id="preview-frequency">毎日</span>で自動生成
+          </div>
+        </div>
+
+        <!-- 最終更新 -->
+        <div style="background: var(--bg-main); padding: 10px; border-radius: 4px; border-top: 1px solid var(--border); margin-top: 8px;">
+          <div style="font-size: 11px; color: var(--text-muted);">最終更新: <span id="preview-updated">未保存</span></div>
         </div>
       </div>
-
     </div>
-
   </div>
+</div>
 
-  <!-- フッター: アクション -->
-  <div style="padding: 12px 16px; border-top: 1px solid var(--border); background: var(--bg-card); display: flex; gap: 8px; justify-content: flex-end;">
-    <button id="reset-btn" data-testid="reset-button" class="action-btn secondary" style="padding: 8px 16px; font-size: 13px;">
-      リセット
-    </button>
-    <button id="save-btn" data-testid="save-button" class="action-btn" style="padding: 8px 16px; font-size: 13px; background: var(--primary); color: #fff; border: none;">
-      保存
-    </button>
+<!-- 確認ダイアログ -->
+<div id="confirm-dialog" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+    <h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">設定を保存しますか？</h2>
+    <p style="margin: 0 0 20px 0; font-size: 13px; color: var(--text-muted); line-height: 1.5;">現在の優先条件設定を保存します。この設定は次の献立生成から適用されます。</p>
+    <div style="display: flex; gap: 8px;">
+      <button data-testid="confirm-save-button" type="button" class="action-btn" style="flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border-radius: 4px; cursor: pointer;">保存</button>
+      <button data-testid="confirm-cancel-button" type="button" class="action-btn secondary" style="flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border-radius: 4px; cursor: pointer;">キャンセル</button>
+    </div>
   </div>
+</div>
 
+<!-- エラーメッセージ -->
+<div id="error-message" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #dc2626; color: #fff; padding: 12px 16px; border-radius: 4px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;">
+  <span id="error-text"></span>
+</div>
+
+<!-- 成功メッセージ -->
+<div id="success-message" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #16a34a; color: #fff; padding: 12px 16px; border-radius: 4px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;">
+  <span id="success-text"></span>
 </div></div>
         <div data-aivic-panel="scr-1783678488970" style="display:none"></div>
         <div data-aivic-panel="scr-1783678530168" style="display:none"></div>

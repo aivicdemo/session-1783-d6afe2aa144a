@@ -185,7 +185,7 @@ window.AIVIC_SYSTEM_NAME = "共通";
 window.AIVIC_TABLES = [];
 window.AIVIC_PRESET_SEED = {};
 window.AIVIC_PAGE_SCREEN_ID = "scr-1783678530168";
-window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {}";
+window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {\n  const startDateInput = container.querySelector('input[name=\"startDate\"]');\n  const endDateInput = container.querySelector('input[name=\"endDate\"]');\n  const userFilterSelect = container.querySelector('select[name=\"userId\"]');\n  const logTypeFilterSelect = container.querySelector('select[name=\"logType\"]');\n  const extractButton = container.querySelector('[data-testid=\"extract-button\"]');\n  const exportCsvButton = container.querySelector('[data-testid=\"export-csv-button\"]');\n  const allergyMgmtButton = container.querySelector('[data-testid=\"allergy-management-button\"]');\n  const menuLogMonitoringButton = container.querySelector('[data-testid=\"menu-log-monitoring-button\"]');\n  const logListDiv = container.querySelector('#log-list');\n  const logDetailDiv = container.querySelector('#log-detail');\n  const logDetailModal = container.querySelector('#log-detail-modal');\n  const closeLogModalBtn = container.querySelector('#close-log-modal');\n  const modalLogContent = container.querySelector('#modal-log-content');\n\n  // KPI 要素\n  const totalLogsKpi = container.querySelector('[data-testid=\"total-logs\"]');\n  const menuGenerationCountKpi = container.querySelector('[data-testid=\"menu-generation-count\"]');\n  const avgRatingKpi = container.querySelector('[data-testid=\"avg-rating\"]');\n  const allergyChangesKpi = container.querySelector('[data-testid=\"allergy-changes\"]');\n\n  // Canvas\n  const menuFrequencyCanvas = container.querySelector('#menu-frequency-chart');\n  const ratingDistributionCanvas = container.querySelector('#rating-distribution-chart');\n\n  // ダミーログデータ（実際は API から取得）\n  const mockLogs = [\n    { id: 'log-001', timestamp: '2025-01-15 09:30', userId: 'user-001', type: 'menu-generation', description: '献立生成実行', details: '朝食メニュー生成完了。アレルギー情報: なし' },\n    { id: 'log-002', timestamp: '2025-01-15 12:15', userId: 'user-002', type: 'meal-rating', description: '食事評価登録', details: '昼食評価: 4.5/5.0 (美味しい)' },\n    { id: 'log-003', timestamp: '2025-01-15 14:00', userId: 'user-001', type: 'allergy-history', description: 'アレルギー情報変更', details: 'エビアレルギーを新規追加' },\n    { id: 'log-004', timestamp: '2025-01-15 16:45', userId: 'user-003', type: 'restriction-history', description: '食事制限情報変更', details: 'ベジタリアン制限を追加' },\n    { id: 'log-005', timestamp: '2025-01-16 08:00', userId: 'user-002', type: 'menu-generation', description: '献立生成実行', details: '朝食メニュー生成完了。食事制限: ベジタリアン' },\n    { id: 'log-006', timestamp: '2025-01-16 11:30', userId: 'user-001', type: 'meal-rating', description: '食事評価登録', details: '昼食評価: 3.8/5.0 (普通)' },\n  ];\n\n  // 初期化：デフォルト日付を設定\n  const today = new Date();\n  const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);\n  startDateInput.valueAsDate = sevenDaysAgo;\n  endDateInput.valueAsDate = today;\n\n  // ログ一覧を描画\n  function renderLogList(logs) {\n    if (logs.length === 0) {\n      logListDiv.innerHTML = '<div style=\"padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px;\">該当するログがありません</div>';\n      return;\n    }\n\n    const html = logs.map(log => `\n      <div class=\"log-item\" data-id=\"${log.id}\" style=\"padding: 10px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;\" onmouseover=\"this.style.background='var(--bg-card)'\" onmouseout=\"this.style.background='transparent'\">\n        <div style=\"font-size: 12px; font-weight: 600; color: var(--text);\">${log.timestamp}</div>\n        <div style=\"font-size: 11px; color: var(--text-muted); margin-top: 2px;\">${log.userId} • ${log.type}</div>\n        <div style=\"font-size: 12px; color: var(--text); margin-top: 4px;\">${log.description}</div>\n      </div>\n    `).join('');\n\n    logListDiv.innerHTML = html;\n\n    // ログアイテムのクリックイベント\n    container.querySelectorAll('.log-item').forEach(item => {\n      item.addEventListener('click', () => {\n        const logId = item.dataset.id;\n        const log = logs.find(l => l.id === logId);\n        if (log) {\n          showLogDetail(log);\n        }\n      });\n    });\n  }\n\n  // ログ詳細を表示\n  function showLogDetail(log) {\n    logDetailDiv.innerHTML = `\n      <div style=\"margin-bottom: 12px;\">\n        <div style=\"font-size: 11px; color: var(--text-muted);\">タイムスタンプ</div>\n        <div style=\"font-size: 13px; color: var(--text); margin-top: 2px;\">${log.timestamp}</div>\n      </div>\n      <div style=\"margin-bottom: 12px;\">\n        <div style=\"font-size: 11px; color: var(--text-muted);\">ユーザーID</div>\n        <div style=\"font-size: 13px; color: var(--text); margin-top: 2px;\">${log.userId}</div>\n      </div>\n      <div style=\"margin-bottom: 12px;\">\n        <div style=\"font-size: 11px; color: var(--text-muted);\">ログタイプ</div>\n        <div style=\"font-size: 13px; color: var(--text); margin-top: 2px;\">${log.type}</div>\n      </div>\n      <div style=\"margin-bottom: 12px;\">\n        <div style=\"font-size: 11px; color: var(--text-muted);\">説明</div>\n        <div style=\"font-size: 13px; color: var(--text); margin-top: 2px;\">${log.description}</div>\n      </div>\n      <div>\n        <div style=\"font-size: 11px; color: var(--text-muted);\">詳細</div>\n        <div style=\"font-size: 13px; color: var(--text); margin-top: 2px;\">${log.details}</div>\n      </div>\n    `;\n  }\n\n  // グラフ描画：献立生成頻度（折れ線グラフ）\n  function drawMenuFrequencyChart() {\n    const ctx = menuFrequencyCanvas.getContext('2d');\n    const rect = menuFrequencyCanvas.getBoundingClientRect();\n    menuFrequencyCanvas.width = rect.width;\n    menuFrequencyCanvas.height = rect.height;\n\n    const data = [2, 3, 2, 4, 3, 5, 4]; // 7日間のデータ\n    const labels = ['1/10', '1/11', '1/12', '1/13', '1/14', '1/15', '1/16'];\n    const padding = 40;\n    const width = menuFrequencyCanvas.width - padding * 2;\n    const height = menuFrequencyCanvas.height - padding * 2;\n    const maxValue = Math.max(...data);\n\n    // 背景\n    ctx.fillStyle = '#faf5f0';\n    ctx.fillRect(0, 0, menuFrequencyCanvas.width, menuFrequencyCanvas.height);\n\n    // グリッド\n    ctx.strokeStyle = '#e8dfd5';\n    ctx.lineWidth = 1;\n    for (let i = 0; i <= 5; i++) {\n      const y = padding + (height / 5) * i;\n      ctx.beginPath();\n      ctx.moveTo(padding, y);\n      ctx.lineTo(menuFrequencyCanvas.width - padding, y);\n      ctx.stroke();\n    }\n\n    // 折れ線\n    ctx.strokeStyle = '#d97706';\n    ctx.lineWidth = 2;\n    ctx.beginPath();\n    data.forEach((value, index) => {\n      const x = padding + (width / (data.length - 1)) * index;\n      const y = padding + height - (height / maxValue) * value;\n      if (index === 0) ctx.moveTo(x, y);\n      else ctx.lineTo(x, y);\n    });\n    ctx.stroke();\n\n    // ポイント\n    ctx.fillStyle = '#d97706';\n    data.forEach((value, index) => {\n      const x = padding + (width / (data.length - 1)) * index;\n      const y = padding + height - (height / maxValue) * value;\n      ctx.beginPath();\n      ctx.arc(x, y, 4, 0, Math.PI * 2);\n      ctx.fill();\n    });\n\n    // ラベル\n    ctx.fillStyle = '#2d2420';\n    ctx.font = '11px sans-serif';\n    ctx.textAlign = 'center';\n    labels.forEach((label, index) => {\n      const x = padding + (width / (data.length - 1)) * index;\n      ctx.fillText(label, x, menuFrequencyCanvas.height - 15);\n    });\n\n    // Y軸ラベル\n    ctx.textAlign = 'right';\n    for (let i = 0; i <= 5; i++) {\n      const y = padding + (height / 5) * (5 - i);\n      ctx.fillText(Math.round((maxValue / 5) * i), padding - 10, y + 4);\n    }\n  }\n\n  // グラフ描画：食事評価分布（円グラフ）\n  function drawRatingDistributionChart() {\n    const ctx = ratingDistributionCanvas.getContext('2d');\n    const rect = ratingDistributionCanvas.getBoundingClientRect();\n    ratingDistributionCanvas.width = rect.width;\n    ratingDistributionCanvas.height = rect.height;\n\n    const ratings = { '5.0': 8, '4.0': 12, '3.0': 6, '2.0': 2, '1.0': 1 };\n    const colors = ['#d97706', '#f59e0b', '#fbbf24', '#fcd34d', '#fef3c7'];\n    const total = Object.values(ratings).reduce((a, b) => a + b, 0);\n\n    const centerX = ratingDistributionCanvas.width / 2;\n    const centerY = ratingDistributionCanvas.height / 2;\n    const radius = Math.min(centerX, centerY) - 20;\n\n    let currentAngle = -Math.PI / 2;\n    let colorIndex = 0;\n\n    Object.entries(ratings).forEach(([rating, count]) => {\n      const sliceAngle = (count / total) * Math.PI * 2;\n\n      // スライス\n      ctx.fillStyle = colors[colorIndex];\n      ctx.beginPath();\n      ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);\n      ctx.lineTo(centerX, centerY);\n      ctx.fill();\n\n      // ラベル\n      const labelAngle = currentAngle + sliceAngle / 2;\n      const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);\n      const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);\n      ctx.fillStyle = '#2d2420';\n      ctx.font = 'bold 12px sans-serif';\n      ctx.textAlign = 'center';\n      ctx.textBaseline = 'middle';\n      ctx.fillText(`${rating}`, labelX, labelY);\n\n      currentAngle += sliceAngle;\n      colorIndex++;\n    });\n\n    // 凡例\n    ctx.font = '11px sans-serif';\n    ctx.textAlign = 'left';\n    let legendY = 20;\n    Object.entries(ratings).forEach(([rating, count], idx) => {\n      ctx.fillStyle = colors[idx];\n      ctx.fillRect(10, legendY, 12, 12);\n      ctx.fillStyle = '#2d2420';\n      ctx.fillText(`${rating}: ${count}件`, 28, legendY + 6);\n      legendY += 18;\n    });\n  }\n\n  // 抽出実行\n  extractButton.addEventListener('click', async () => {\n    const startDate = startDateInput.value;\n    const endDate = endDateInput.value;\n    const userId = userFilterSelect.value;\n    const logType = logTypeFilterSelect.value;\n\n    // フィルタリング\n    let filtered = mockLogs;\n    if (userId) filtered = filtered.filter(l => l.userId === userId);\n    if (logType) filtered = filtered.filter(l => l.type === logType);\n\n    renderLogList(filtered);\n\n    // KPI 更新\n    totalLogsKpi.textContent = filtered.length;\n    const menuGenCount = filtered.filter(l => l.type === 'menu-generation').length;\n    menuGenerationCountKpi.textContent = menuGenCount;\n\n    const ratings = filtered.filter(l => l.type === 'meal-rating');\n    const avgRating = ratings.length > 0 ? (ratings.length * 4.1 / ratings.length).toFixed(1) : '0.0';\n    avgRatingKpi.textContent = avgRating;\n\n    const allergyChanges = filtered.filter(l => l.type === 'allergy-history').length;\n    allergyChangesKpi.textContent = allergyChanges;\n\n    // グラフ再描画\n    drawMenuFrequencyChart();\n    drawRatingDistributionChart();\n  });\n\n  // CSV エクスポート\n  exportCsvButton.addEventListener('click', () => {\n    const logs = mockLogs;\n    const headers = ['タイムスタンプ', 'ユーザーID', 'ログタイプ', '説明', '詳細'];\n    const rows = logs.map(l => [l.timestamp, l.userId, l.type, l.description, l.details]);\n\n    const csv = '\\uFEFF' + headers.join(',') + '\\n' + rows.map(r => r.map(cell => `\"${cell}\"`).join(',')).join('\\n');\n    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });\n    const link = document.createElement('a');\n    link.href = URL.createObjectURL(blob);\n    link.download = 'app-logs.csv';\n    link.click();\n  });\n\n  // ナビゲーション\n  allergyMgmtButton.addEventListener('click', () => {\n    window.showScreen('scr-1783678285918');\n  });\n\n  menuLogMonitoringButton.addEventListener('click', () => {\n    window.showScreen('scr-1783678313897');\n  });\n\n  // モーダル閉じる\n  closeLogModalBtn.addEventListener('click', () => {\n    logDetailModal.style.display = 'none';\n  });\n\n  logDetailModal.addEventListener('click', (e) => {\n    if (e.target === logDetailModal) {\n      logDetailModal.style.display = 'none';\n    }\n  });\n\n  // 初期表示\n  renderLogList(mockLogs);\n  drawMenuFrequencyChart();\n  drawRatingDistributionChart();\n\n  // KPI 初期化\n  totalLogsKpi.textContent = mockLogs.length;\n  menuGenerationCountKpi.textContent = mockLogs.filter(l => l.type === 'menu-generation').length;\n  avgRatingKpi.textContent = '4.1';\n  allergyChangesKpi.textContent = mockLogs.filter(l => l.type === 'allergy-history').length;\n}";
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -250,42 +250,34 @@ window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {}";
         <div data-aivic-panel="scr-1783678463634" style="display:none"></div>
         <div data-aivic-panel="scr-1783678488970" style="display:none"></div>
         <div data-aivic-panel="scr-1783678530168" style="display:block"><div style="display: flex; flex-direction: column; height: 100%; background: var(--bg-main); color: var(--text);">
-  <!-- ヘッダー / Breadcrumb -->
+  <!-- ヘッダー -->
   <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-card);">
-    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">献立くん・共通・アプリ内ログ抽出・分析画面</div>
-    <h1 style="font-size: 20px; font-weight: 600; margin: 0;">アプリ内ログ抽出・分析</h1>
+    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">献立くん・共通・アプリ内ログ抽出・分析画面</div>
+    <h1 style="margin: 0; font-size: 20px; font-weight: 600;">アプリ内ログ抽出・分析</h1>
   </div>
 
   <!-- フィルタバー -->
-  <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-card); display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; align-items: flex-end;">
-    
-    <!-- 開始日 -->
+  <div style="padding: 12px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 12px; align-items: flex-end;">
     <div>
-      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">開始日</label>
-      <input type="date" data-testid="start-date" name="startDate" style="width: 100%; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.18); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px;" />
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">開始日</label>
+      <input type="date" data-testid="start-date" name="startDate" class="input" style="width: 100%; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.18); background: var(--bg-main); border-radius: 4px; color: var(--text); font-size: 13px;" />
     </div>
-
-    <!-- 終了日 -->
     <div>
-      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">終了日</label>
-      <input type="date" data-testid="end-date" name="endDate" style="width: 100%; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.18); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px;" />
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">終了日</label>
+      <input type="date" data-testid="end-date" name="endDate" class="input" style="width: 100%; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.18); background: var(--bg-main); border-radius: 4px; color: var(--text); font-size: 13px;" />
     </div>
-
-    <!-- ユーザー選択 -->
     <div>
-      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">ユーザー</label>
-      <select data-testid="user-filter" name="userId" style="width: 100%; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.18); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px;">
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">ユーザー</label>
+      <select data-testid="user-filter" name="userId" class="input" style="width: 100%; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.18); background: var(--bg-main); border-radius: 4px; color: var(--text); font-size: 13px;">
         <option value="">全ユーザー</option>
-        <option value="user-001">田中太郎</option>
-        <option value="user-002">鈴木花子</option>
-        <option value="user-003">佐藤次郎</option>
+        <option value="user-001">ユーザーA</option>
+        <option value="user-002">ユーザーB</option>
+        <option value="user-003">ユーザーC</option>
       </select>
     </div>
-
-    <!-- ログタイプ -->
     <div>
-      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">ログタイプ</label>
-      <select data-testid="log-type-filter" name="logType" style="width: 100%; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.18); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px;">
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">ログタイプ</label>
+      <select data-testid="log-type-filter" name="logType" class="input" style="width: 100%; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.18); background: var(--bg-main); border-radius: 4px; color: var(--text); font-size: 13px;">
         <option value="">全タイプ</option>
         <option value="menu-generation">献立生成ログ</option>
         <option value="meal-rating">食事評価ログ</option>
@@ -293,109 +285,84 @@ window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {}";
         <option value="restriction-history">食事制限履歴</option>
       </select>
     </div>
-
-    <!-- 抽出実行ボタン -->
-    <div style="display: flex; gap: 8px;">
-      <button data-testid="extract-button" style="flex: 1; padding: 6px 12px; background: var(--primary); color: #fff; border: none; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.2s;">抽出実行</button>
-      <button data-testid="export-csv-button" style="flex: 1; padding: 6px 12px; background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer;">CSV</button>
-    </div>
+    <button data-testid="extract-button" class="action-btn" style="padding: 6px 16px; font-size: 13px; white-space: nowrap;">抽出実行</button>
   </div>
 
-  <!-- メインコンテンツ（2カラム: 一覧 + 詳細） -->
-  <div style="flex: 1; display: grid; grid-template-columns: 1fr 320px; gap: 12px; padding: 12px 16px; overflow: hidden;">
+  <!-- メインコンテンツ -->
+  <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 16px; overflow: hidden;">
     
-    <!-- 左：ログ一覧テーブル -->
-    <div style="display: flex; flex-direction: column; overflow: hidden; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border);">
-      <div style="padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text);">ログ一覧（<span id="log-count">0</span>件）</div>
-      <div style="flex: 1; overflow-y: auto;">
-        <table data-testid="log-list" style="width: 100%; font-size: 12px; border-collapse: collapse;">
-          <thead style="position: sticky; top: 0; background: var(--bg-main); border-bottom: 1px solid var(--border);">
-            <tr>
-              <th style="padding: 8px; text-align: left; color: var(--text); font-weight: 600; border-right: 1px solid var(--border);">タイムスタンプ</th>
-              <th style="padding: 8px; text-align: left; color: var(--text); font-weight: 600; border-right: 1px solid var(--border);">ユーザー</th>
-              <th style="padding: 8px; text-align: left; color: var(--text); font-weight: 600; border-right: 1px solid var(--border);">ログタイプ</th>
-              <th style="padding: 8px; text-align: left; color: var(--text); font-weight: 600;">詳細</th>
-            </tr>
-          </thead>
-          <tbody id="log-tbody">
-            <tr style="background: var(--bg-card); border-bottom: 1px solid var(--border);">
-              <td colspan="4" style="padding: 16px; text-align: center; color: var(--text-muted);">フィルタを設定して抽出実行してください</td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- 左パネル：ログ一覧 + 詳細 -->
+    <div style="display: flex; flex-direction: column; gap: 12px; overflow: hidden;">
+      <!-- ログ一覧 -->
+      <div class="card" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px;">
+        <h3 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: var(--text);">ログ一覧</h3>
+        <div id="log-list" style="flex: 1; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main);">
+          <div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px;">読込中...</div>
+        </div>
+      </div>
+
+      <!-- ログ詳細パネル -->
+      <div class="card" style="height: 200px; padding: 12px; overflow-y: auto;">
+        <h3 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: var(--text);">ログ詳細</h3>
+        <div id="log-detail" style="font-size: 12px; color: var(--text-muted);">
+          <p>一覧からログを選択してください</p>
+        </div>
       </div>
     </div>
 
-    <!-- 右：詳細パネル -->
-    <div style="display: flex; flex-direction: column; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border); overflow: hidden;">
-      <div style="padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text);">ログ詳細</div>
-      <div id="detail-panel" style="flex: 1; padding: 12px; overflow-y: auto; font-size: 12px;">
-        <div style="color: var(--text-muted); text-align: center; padding: 20px 0;">ログを選択してください</div>
+    <!-- 右パネル：グラフ・統計 -->
+    <div style="display: flex; flex-direction: column; gap: 12px; overflow: hidden;">
+      <!-- 献立生成頻度グラフ -->
+      <div class="card" style="flex: 1; padding: 12px; display: flex; flex-direction: column;">
+        <h3 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: var(--text);">献立生成頻度</h3>
+        <canvas id="menu-frequency-chart" style="flex: 1; min-height: 150px;"></canvas>
+      </div>
+
+      <!-- 食事評価分布チャート -->
+      <div class="card" style="flex: 1; padding: 12px; display: flex; flex-direction: column;">
+        <h3 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: var(--text);">食事評価分布</h3>
+        <canvas id="rating-distribution-chart" style="flex: 1; min-height: 150px;"></canvas>
       </div>
     </div>
   </div>
 
-  <!-- 統計サマリー（下部タブ） -->
-  <div style="border-top: 1px solid var(--border); background: var(--bg-card); padding: 12px 16px;">
-    <div style="display: flex; gap: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
-      <button data-testid="tab-summary" class="stat-tab active" data-tab="summary" style="padding: 6px 12px; background: transparent; color: var(--text); border: none; border-bottom: 2px solid var(--primary); font-size: 12px; font-weight: 600; cursor: pointer;">サマリー</button>
-      <button data-testid="tab-generation" class="stat-tab" data-tab="generation" style="padding: 6px 12px; background: transparent; color: var(--text-muted); border: none; border-bottom: 2px solid transparent; font-size: 12px; font-weight: 600; cursor: pointer;">献立生成</button>
-      <button data-testid="tab-rating" class="stat-tab" data-tab="rating" style="padding: 6px 12px; background: transparent; color: var(--text-muted); border: none; border-bottom: 2px solid transparent; font-size: 12px; font-weight: 600; cursor: pointer;">食事評価</button>
-      <button data-testid="tab-history" class="stat-tab" data-tab="history" style="padding: 6px 12px; background: transparent; color: var(--text-muted); border: none; border-bottom: 2px solid transparent; font-size: 12px; font-weight: 600; cursor: pointer;">変更履歴</button>
+  <!-- 統計サマリー -->
+  <div style="padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+    <div class="card" style="padding: 10px; text-align: center;">
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">総ログ件数</div>
+      <div data-testid="total-logs" style="font-size: 18px; font-weight: 700; color: var(--primary);">0</div>
     </div>
+    <div class="card" style="padding: 10px; text-align: center;">
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">献立生成回数</div>
+      <div data-testid="menu-generation-count" style="font-size: 18px; font-weight: 700; color: var(--primary);">0</div>
+    </div>
+    <div class="card" style="padding: 10px; text-align: center;">
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">平均評価</div>
+      <div data-testid="avg-rating" style="font-size: 18px; font-weight: 700; color: var(--primary);">0.0</div>
+    </div>
+    <div class="card" style="padding: 10px; text-align: center;">
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">アレルギー変更</div>
+      <div data-testid="allergy-changes" style="font-size: 18px; font-weight: 700; color: var(--primary);">0</div>
+    </div>
+  </div>
 
-    <!-- タブ1: サマリー -->
-    <div id="tab-summary-content" class="tab-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;">
-      <div style="background: var(--bg-main); padding: 12px; border-radius: 4px; border: 1px solid var(--border);">
-        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">総ログ件数</div>
-        <div data-testid="kpi-total-logs" style="font-size: 20px; font-weight: 700; color: var(--primary);">0</div>
-      </div>
-      <div style="background: var(--bg-main); padding: 12px; border-radius: 4px; border: 1px solid var(--border);">
-        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">アクティブユーザー</div>
-        <div data-testid="kpi-active-users" style="font-size: 20px; font-weight: 700; color: var(--primary);">0</div>
-      </div>
-      <div style="background: var(--bg-main); padding: 12px; border-radius: 4px; border: 1px solid var(--border);">
-        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">献立生成回数</div>
-        <div data-testid="kpi-menu-generations" style="font-size: 20px; font-weight: 700; color: var(--primary);">0</div>
-      </div>
-      <div style="background: var(--bg-main); padding: 12px; border-radius: 4px; border: 1px solid var(--border);">
-        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">食事評価件数</div>
-        <div data-testid="kpi-meal-ratings" style="font-size: 20px; font-weight: 700; color: var(--primary);">0</div>
-      </div>
-    </div>
-
-    <!-- タブ2: 献立生成グラフ -->
-    <div id="tab-generation-content" class="tab-content" style="display: none;">
-      <div style="background: var(--bg-main); padding: 12px; border-radius: 4px; border: 1px solid var(--border); height: 200px;">
-        <canvas id="generation-chart" style="width: 100%; height: 100%;"></canvas>
-      </div>
-    </div>
-
-    <!-- タブ3: 食事評価分布 -->
-    <div id="tab-rating-content" class="tab-content" style="display: none;">
-      <div style="background: var(--bg-main); padding: 12px; border-radius: 4px; border: 1px solid var(--border); height: 200px;">
-        <canvas id="rating-chart" style="width: 100%; height: 100%;"></canvas>
-      </div>
-    </div>
-
-    <!-- タブ4: 変更履歴タイムライン -->
-    <div id="tab-history-content" class="tab-content" style="display: none; max-height: 200px; overflow-y: auto;">
-      <div id="history-timeline" style="font-size: 12px;">
-        <div style="color: var(--text-muted); text-align: center; padding: 20px 0;">変更履歴はありません</div>
-      </div>
-    </div>
+  <!-- アクション領域 -->
+  <div style="padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end;">
+    <button data-testid="export-csv-button" class="action-btn secondary" style="padding: 6px 14px; font-size: 13px;">CSV エクスポート</button>
+    <button data-testid="allergy-management-button" class="action-btn" style="padding: 6px 14px; font-size: 13px;">アレルギー・食事制限管理</button>
+    <button data-testid="menu-log-monitoring-button" class="action-btn" style="padding: 6px 14px; font-size: 13px;">献立生成ログ監視</button>
   </div>
 </div>
 
-<!-- 詳細モーダル（ログ詳細表示） -->
-<div id="detail-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
-  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 600px; width: 90vw; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+<!-- モーダル：ログ詳細表示 -->
+<div id="log-detail-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h2 style="font-size: 16px; font-weight: 600; margin: 0;">ログ詳細</h2>
-      <button id="close-detail-modal" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; padding: 0; width: 24px; height: 24px;">×</button>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 600;">ログ詳細</h2>
+      <button id="close-log-modal" class="action-btn secondary" style="padding: 4px 8px; font-size: 12px;">✕</button>
     </div>
-    <div id="modal-content" style="font-size: 13px; line-height: 1.6;">
-      <!-- 動的に挿入される -->
+    <div id="modal-log-content" style="font-size: 13px; line-height: 1.6;">
+      <!-- 詳細内容がここに挿入される -->
     </div>
   </div>
 </div></div>

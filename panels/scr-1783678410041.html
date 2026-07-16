@@ -185,7 +185,7 @@ window.AIVIC_SYSTEM_NAME = "共通";
 window.AIVIC_TABLES = [];
 window.AIVIC_PRESET_SEED = {};
 window.AIVIC_PAGE_SCREEN_ID = "scr-1783678410041";
-window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {\n  const algorithmSelect = container.querySelector('[data-testid=\"algorithm-select\"]');\n  const nutritionSlider = container.querySelector('[data-testid=\"nutrition-slider\"]');\n  const nutritionValue = container.querySelector('[data-testid=\"nutrition-value\"]');\n  const costSlider = container.querySelector('[data-testid=\"cost-slider\"]');\n  const costValue = container.querySelector('[data-testid=\"cost-value\"]');\n  const timeSlider = container.querySelector('[data-testid=\"time-slider\"]');\n  const timeValue = container.querySelector('[data-testid=\"time-value\"]');\n  const preferenceSlider = container.querySelector('[data-testid=\"preference-slider\"]');\n  const preferenceValue = container.querySelector('[data-testid=\"preference-value\"]');\n  const allergySync = container.querySelector('[data-testid=\"allergy-sync\"]');\n  const restrictionSync = container.querySelector('[data-testid=\"restriction-sync\"]');\n  const historyToggle = container.querySelector('[data-testid=\"history-toggle\"]');\n  const learningPeriod = container.querySelector('[data-testid=\"learning-period\"]');\n  const previewButton = container.querySelector('[data-testid=\"preview-button\"]');\n  const updateButton = container.querySelector('[data-testid=\"update-button\"]');\n  const allergyLink = container.querySelector('[data-testid=\"allergy-link\"]');\n  const conditionLink = container.querySelector('[data-testid=\"condition-link\"]');\n  const previewContent = container.querySelector('[data-testid=\"preview-content\"]');\n  const excludedItems = container.querySelector('[data-testid=\"excluded-items\"]');\n  const recommendedItems = container.querySelector('[data-testid=\"recommended-items\"]');\n  const lastUpdate = container.querySelector('[data-testid=\"last-update\"]');\n  const confirmModal = container.querySelector('[data-testid=\"confirm-modal\"]');\n  const confirmCancel = container.querySelector('[data-testid=\"confirm-cancel\"]');\n  const confirmOk = container.querySelector('[data-testid=\"confirm-ok\"]');\n  const successModal = container.querySelector('[data-testid=\"success-modal\"]');\n  const successClose = container.querySelector('[data-testid=\"success-close\"]');\n\n  // スライダー値の表示更新\n  const updateSliderDisplay = () => {\n    nutritionValue.textContent = nutritionSlider.value + '%';\n    costValue.textContent = costSlider.value + '%';\n    timeValue.textContent = timeSlider.value + '%';\n    preferenceValue.textContent = preferenceSlider.value + '%';\n  };\n\n  nutritionSlider.addEventListener('input', updateSliderDisplay);\n  costSlider.addEventListener('input', updateSliderDisplay);\n  timeSlider.addEventListener('input', updateSliderDisplay);\n  preferenceSlider.addEventListener('input', updateSliderDisplay);\n\n  // プレビューボタン\n  previewButton.addEventListener('click', async () => {\n    const algorithm = algorithmSelect.value;\n    if (!algorithm) {\n      previewContent.textContent = 'アルゴリズムを選択してください';\n      return;\n    }\n\n    const params = {\n      algorithm,\n      nutrition: parseInt(nutritionSlider.value),\n      cost: parseInt(costSlider.value),\n      time: parseInt(timeSlider.value),\n      preference: parseInt(preferenceSlider.value),\n      allergySync: allergySync.checked,\n      restrictionSync: restrictionSync.checked,\n      useHistory: historyToggle.checked,\n      learningPeriod: parseInt(learningPeriod.value)\n    };\n\n    previewContent.innerHTML = `\n      <div style=\"font-size: 12px; line-height: 1.6;\">\n        <strong>アルゴリズム:</strong> ${algorithm}<br>\n        <strong>優先度:</strong> 栄養${params.nutrition}% / コスト${params.cost}% / 時間${params.time}% / 嗜好${params.preference}%<br>\n        <strong>同期:</strong> アレルギー${params.allergySync ? '有効' : '無効'} / 制限${params.restrictionSync ? '有効' : '無効'}<br>\n        <strong>学習期間:</strong> ${params.learningPeriod}日<br>\n        <strong>評価データ:</strong> ${params.useHistory ? '活用' : '未使用'}\n      </div>\n    `;\n\n    // 食材リストを読み込み\n    loadFoodLists(params);\n  });\n\n  // 食材リスト読み込み\n  const loadFoodLists = async (params) => {\n    // ダミーデータ（実際はAPIから取得）\n    const excluded = ['ピーナッツ', 'エビ', 'そば', 'クルミ', 'ゴマ'];\n    const recommended = ['鶏肉', 'ブロッコリー', '玄米', 'サーモン', 'ニンジン', 'トマト'];\n\n    excludedItems.innerHTML = excluded.map(item => \n      `<div style=\"display: inline-block; background: var(--primary); color: #fff; padding: 4px 8px; border-radius: 3px; margin: 2px; font-size: 11px;\">${item}</div>`\n    ).join('');\n\n    recommendedItems.innerHTML = recommended.map(item => \n      `<div style=\"display: inline-block; background: var(--bg-sidebar); color: var(--text); padding: 4px 8px; border-radius: 3px; margin: 2px; font-size: 11px; border: 1px solid var(--border);\">${item}</div>`\n    ).join('');\n  };\n\n  // 更新ボタン\n  updateButton.addEventListener('click', () => {\n    if (!algorithmSelect.value) {\n      alert('アルゴリズムを選択してください');\n      return;\n    }\n    confirmModal.style.display = 'flex';\n  });\n\n  // 確認モーダル: キャンセル\n  confirmCancel.addEventListener('click', () => {\n    confirmModal.style.display = 'none';\n  });\n\n  // 確認モーダル: 実行\n  confirmOk.addEventListener('click', async () => {\n    confirmModal.style.display = 'none';\n\n    const params = {\n      algorithm: algorithmSelect.value,\n      nutrition: parseInt(nutritionSlider.value),\n      cost: parseInt(costSlider.value),\n      time: parseInt(timeSlider.value),\n      preference: parseInt(preferenceSlider.value),\n      allergySync: allergySync.checked,\n      restrictionSync: restrictionSync.checked,\n      useHistory: historyToggle.checked,\n      learningPeriod: parseInt(learningPeriod.value),\n      updatedAt: new Date().toISOString()\n    };\n\n    // API呼び出し（テーブルがあれば）\n    if (tables && tables.length > 0) {\n      const saved = await window.aivicApi.save(0, params);\n      if (saved) {\n        lastUpdate.textContent = new Date().toLocaleString('ja-JP');\n        successModal.style.display = 'flex';\n      }\n    } else {\n      lastUpdate.textContent = new Date().toLocaleString('ja-JP');\n      successModal.style.display = 'flex';\n    }\n  };\n\n  // 成功モーダル: 閉じる\n  successClose.addEventListener('click', () => {\n    successModal.style.display = 'none';\n  });\n\n  // 詳細設定リンク\n  allergyLink.addEventListener('click', () => {\n    window.showScreen('scr-1783678285918');\n  });\n\n  conditionLink.addEventListener('click', () => {\n    window.showScreen('scr-1783678463634');\n  });\n\n  // Escキーでモーダルを閉じる\n  document.addEventListener('keydown', (e) => {\n    if (e.key === 'Escape') {\n      confirmModal.style.display = 'none';\n      successModal.style.display = 'none';\n    }\n  });\n\n  // overlay背景クリックで閉じる\n  confirmModal.addEventListener('click', (e) => {\n    if (e.target === confirmModal) {\n      confirmModal.style.display = 'none';\n    }\n  });\n\n  successModal.addEventListener('click', (e) => {\n    if (e.target === successModal) {\n      successModal.style.display = 'none';\n    }\n  });\n\n  // 初期表示\n  updateSliderDisplay();\n}";
+window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {\n  // スライダー値の表示更新\n  const sliders = {\n    nutrition: container.querySelector('input[name=\"nutrition\"]'),\n    cost: container.querySelector('input[name=\"cost\"]'),\n    time: container.querySelector('input[name=\"time\"]'),\n    preference: container.querySelector('input[name=\"preference\"]')\n  };\n\n  const valueDisplays = {\n    nutrition: container.querySelector('[data-testid=\"nutrition-value\"]'),\n    cost: container.querySelector('[data-testid=\"cost-value\"]'),\n    time: container.querySelector('[data-testid=\"time-value\"]'),\n    preference: container.querySelector('[data-testid=\"preference-value\"]')\n  };\n\n  Object.entries(sliders).forEach(([key, slider]) => {\n    slider.addEventListener('input', (e) => {\n      valueDisplays[key].textContent = e.target.value + '%';\n    });\n  });\n\n  // 除外食材・推奨食材の初期化\n  const loadItemLists = async () => {\n    try {\n      const excluded = await window.aivicApi.list(0);\n      const recommended = await window.aivicApi.list(1);\n\n      const excludedList = container.querySelector('#excluded-items-list');\n      const recommendedList = container.querySelector('#recommended-items-list');\n\n      if (excluded && excluded.length > 0) {\n        excludedList.innerHTML = excluded\n          .slice(0, 8)\n          .map(item => `<div style=\"padding: 4px 0; border-bottom: 1px solid var(--border);\">${item.name || item.ingredient || '食材'}</div>`)\n          .join('');\n      } else {\n        excludedList.innerHTML = '<div style=\"color: var(--text-muted); text-align: center; padding: 12px 0;\">除外食材がありません</div>';\n      }\n\n      if (recommended && recommended.length > 0) {\n        recommendedList.innerHTML = recommended\n          .slice(0, 8)\n          .map(item => `<div style=\"padding: 4px 0; border-bottom: 1px solid var(--border);\">${item.name || item.ingredient || '食材'}</div>`)\n          .join('');\n      } else {\n        recommendedList.innerHTML = '<div style=\"color: var(--text-muted); text-align: center; padding: 12px 0;\">推奨食材がありません</div>';\n      }\n    } catch (err) {\n      console.error('Failed to load item lists:', err);\n    }\n  };\n\n  loadItemLists();\n\n  // プレビューボタン\n  const previewBtn = container.querySelector('[data-testid=\"preview-button\"]');\n  const previewResult = container.querySelector('#preview-result');\n\n  previewBtn.addEventListener('click', () => {\n    const algorithm = container.querySelector('[data-testid=\"algorithm-select\"]').value;\n    const nutrition = container.querySelector('[data-testid=\"nutrition-slider\"]').value;\n    const cost = container.querySelector('[data-testid=\"cost-slider\"]').value;\n    const time = container.querySelector('[data-testid=\"time-slider\"]').value;\n    const preference = container.querySelector('[data-testid=\"preference-slider\"]').value;\n    const learningPeriod = container.querySelector('[data-testid=\"learning-period-input\"]').value;\n\n    if (!algorithm) {\n      previewResult.innerHTML = '<div style=\"color: #ef4444;\">アルゴリズムを選択してください</div>';\n      return;\n    }\n\n    const total = parseInt(nutrition) + parseInt(cost) + parseInt(time) + parseInt(preference);\n    const preview = `\n      <div style=\"font-size: 12px; line-height: 1.6;\">\n        <div><strong>選択アルゴリズム:</strong> ${algorithm}</div>\n        <div><strong>優先度配分:</strong> 栄養${nutrition}% / コスト${cost}% / 調理${time}% / 嗜好${preference}%</div>\n        <div><strong>学習期間:</strong> ${learningPeriod}日</div>\n        <div style=\"margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--text-muted);\">\n          ${total === 100 ? '✓ 優先度配分が正常です' : `⚠ 優先度合計: ${total}% (推奨: 100%)`}\n        </div>\n      </div>\n    `;\n    previewResult.innerHTML = preview;\n  });\n\n  // 更新ボタン\n  const updateBtn = container.querySelector('[data-testid=\"update-button\"]');\n  const confirmDialog = container.querySelector('#confirm-dialog-overlay');\n  const confirmOkBtn = container.querySelector('#confirm-ok-btn');\n  const confirmCancelBtn = container.querySelector('#confirm-cancel-btn');\n  const successMsg = container.querySelector('#success-message');\n  const errorMsg = container.querySelector('#error-message');\n\n  updateBtn.addEventListener('click', () => {\n    const algorithm = container.querySelector('[data-testid=\"algorithm-select\"]').value;\n    if (!algorithm) {\n      errorMsg.textContent = 'アルゴリズムを選択してください';\n      errorMsg.style.display = 'block';\n      setTimeout(() => { errorMsg.style.display = 'none'; }, 3000);\n      return;\n    }\n    confirmDialog.style.display = 'flex';\n  });\n\n  confirmCancelBtn.addEventListener('click', () => {\n    confirmDialog.style.display = 'none';\n  });\n\n  confirmOkBtn.addEventListener('click', async () => {\n    confirmDialog.style.display = 'none';\n\n    const algorithm = container.querySelector('[data-testid=\"algorithm-select\"]').value;\n    const nutrition = container.querySelector('[data-testid=\"nutrition-slider\"]').value;\n    const cost = container.querySelector('[data-testid=\"cost-slider\"]').value;\n    const time = container.querySelector('[data-testid=\"time-slider\"]').value;\n    const preference = container.querySelector('[data-testid=\"preference-slider\"]').value;\n    const allergySync = container.querySelector('[data-testid=\"allergy-sync-check\"]').checked;\n    const restrictionSync = container.querySelector('[data-testid=\"restriction-sync-check\"]').checked;\n    const useHistory = container.querySelector('[data-testid=\"history-toggle\"]').checked;\n    const learningPeriod = container.querySelector('[data-testid=\"learning-period-input\"]').value;\n\n    try {\n      const result = await window.aivicApi.save(0, {\n        algorithm,\n        nutrition: parseInt(nutrition),\n        cost: parseInt(cost),\n        time: parseInt(time),\n        preference: parseInt(preference),\n        allergySync,\n        restrictionSync,\n        useHistory,\n        learningPeriod: parseInt(learningPeriod),\n        updatedAt: new Date().toISOString()\n      });\n\n      if (result) {\n        successMsg.style.display = 'block';\n        setTimeout(() => { successMsg.style.display = 'none'; }, 3000);\n        previewResult.innerHTML = '<div style=\"color: #10b981;\">✓ アルゴリズムが正常に更新されました</div>';\n      }\n    } catch (err) {\n      console.error('Update failed:', err);\n      errorMsg.textContent = 'アルゴリズムの更新に失敗しました';\n      errorMsg.style.display = 'block';\n      setTimeout(() => { errorMsg.style.display = 'none'; }, 3000);\n    }\n  });\n\n  // キャンセルボタン\n  const cancelBtn = container.querySelector('[data-testid=\"cancel-button\"]');\n  cancelBtn.addEventListener('click', () => {\n    window.showScreen('scr-1783678463634');\n  });\n\n  // 管理画面へのナビゲーション\n  container.querySelector('[data-testid=\"manage-excluded-btn\"]').addEventListener('click', () => {\n    window.showScreen('scr-1783678285918');\n  });\n\n  container.querySelector('[data-testid=\"manage-recommended-btn\"]').addEventListener('click', () => {\n    window.showScreen('scr-1783678285918');\n  });\n\n  // Escキーでダイアログを閉じる\n  document.addEventListener('keydown', (e) => {\n    if (e.key === 'Escape' && confirmDialog.style.display === 'flex') {\n      confirmDialog.style.display = 'none';\n    }\n  });\n\n  // オーバーレイクリックで閉じる\n  confirmDialog.addEventListener('click', (e) => {\n    if (e.target === confirmDialog) {\n      confirmDialog.style.display = 'none';\n    }\n  });\n}";
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -250,14 +250,14 @@ window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {\n  const algo
   <!-- ヘッダー -->
   <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-card);">
     <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">献立くん・共通・献立生成アルゴリズムの更新処理</div>
-    <h1 style="margin: 0; font-size: 18px; font-weight: 600;">献立生成アルゴリズムの更新処理</h1>
+    <h1 style="font-size: 20px; font-weight: 600; margin: 0;">献立生成アルゴリズムの更新処理</h1>
   </div>
 
   <!-- メインコンテンツ -->
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; flex: 1; overflow: auto;">
+  <div style="display: flex; flex: 1; overflow: hidden; gap: 12px; padding: 12px;">
     
-    <!-- 左パネル: パラメータ入力 -->
-    <div style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+    <!-- 左側：入力フォーム -->
+    <div style="flex: 0 0 45%; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 8px;">
       
       <!-- アルゴリズム選択 -->
       <div class="card" style="padding: 12px;">
@@ -265,15 +265,15 @@ window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {\n  const algo
         <select data-testid="algorithm-select" name="algorithm" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 14px;">
           <option value="">選択してください</option>
           <option value="v1-balanced">v1 - バランス型</option>
-          <option value="v2-nutrition">v2 - 栄養最適化</option>
-          <option value="v3-cost">v3 - コスト効率</option>
-          <option value="v4-preference">v4 - 嗜好学習</option>
+          <option value="v2-nutrition">v2 - 栄養最適化型</option>
+          <option value="v3-cost">v3 - コスト効率型</option>
+          <option value="v4-preference">v4 - 嗜好学習型</option>
         </select>
       </div>
 
       <!-- 優先度スライダー群 -->
       <div class="card" style="padding: 12px;">
-        <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text);">優先度設定</div>
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text);">優先度設定</div>
         
         <!-- 栄養バランス -->
         <div style="margin-bottom: 12px;">
@@ -314,103 +314,95 @@ window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {\n  const algo
 
       <!-- 同期設定 -->
       <div class="card" style="padding: 12px;">
-        <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text);">同期設定</div>
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text);">データ同期設定</div>
         
-        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; font-size: 13px;">
-          <input data-testid="allergy-sync" type="checkbox" name="allergySync" checked style="accent-color: var(--primary);">
-          <span>アレルギー情報を同期</span>
+        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+          <input data-testid="allergy-sync-check" type="checkbox" name="allergySync" checked style="accent-color: var(--primary);">
+          <span style="font-size: 12px; color: var(--text);">アレルギー情報を同期</span>
         </label>
 
-        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; font-size: 13px;">
-          <input data-testid="restriction-sync" type="checkbox" name="restrictionSync" checked style="accent-color: var(--primary);">
-          <span>食事制限情報を同期</span>
+        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+          <input data-testid="restriction-sync-check" type="checkbox" name="restrictionSync" checked style="accent-color: var(--primary);">
+          <span style="font-size: 12px; color: var(--text);">食事制限情報を同期</span>
         </label>
 
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
           <input data-testid="history-toggle" type="checkbox" name="useHistory" checked style="accent-color: var(--primary);">
-          <span>過去の食事評価データを活用</span>
+          <span style="font-size: 12px; color: var(--text);">過去の食事評価データを活用</span>
         </label>
       </div>
 
       <!-- 学習期間設定 -->
       <div class="card" style="padding: 12px;">
         <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">学習期間（日数）</label>
-        <input data-testid="learning-period" type="number" name="learningPeriod" min="1" max="365" value="30" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 14px;">
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">過去N日間のデータを学習対象とします</div>
+        <input data-testid="learning-period-input" type="number" name="learningPeriod" min="7" max="365" value="30" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 14px;">
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">過去N日間のデータを学習に使用します</div>
       </div>
 
-      <!-- アクションボタン -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-        <button data-testid="preview-button" class="action-btn" style="padding: 10px; font-size: 13px; border: none; border-radius: 4px; cursor: pointer; background: var(--primary); color: #fff; font-weight: 500;">プレビュー</button>
-        <button data-testid="update-button" class="action-btn" style="padding: 10px; font-size: 13px; border: none; border-radius: 4px; cursor: pointer; background: var(--primary); color: #fff; font-weight: 500;">更新実行</button>
-      </div>
-
-      <!-- 詳細設定リンク -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-        <button data-testid="allergy-link" class="action-btn secondary" style="padding: 8px; font-size: 12px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: transparent; color: var(--text); font-weight: 500;">アレルギー管理</button>
-        <button data-testid="condition-link" class="action-btn secondary" style="padding: 8px; font-size: 12px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: transparent; color: var(--text); font-weight: 500;">優先条件設定</button>
-      </div>
     </div>
 
-    <!-- 右パネル: プレビュー・食材リスト -->
-    <div style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+    <!-- 右側：プレビュー領域 -->
+    <div style="flex: 0 0 55%; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;">
       
-      <!-- プレビュー結果 -->
-      <div class="card" style="padding: 12px;">
-        <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text);">アルゴリズムプレビュー</div>
-        <div data-testid="preview-content" style="background: var(--bg-main); padding: 10px; border-radius: 4px; font-size: 12px; color: var(--text-muted); min-height: 80px; line-height: 1.5;">
-          アルゴリズムを選択してプレビューボタンをクリックしてください
-        </div>
-      </div>
-
       <!-- 除外食材リスト -->
-      <div class="card" style="padding: 12px;">
-        <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text);">除外食材</div>
-        <div data-testid="excluded-items" style="background: var(--bg-main); padding: 10px; border-radius: 4px; min-height: 60px; max-height: 120px; overflow-y: auto;">
-          <div style="font-size: 12px; color: var(--text-muted);">データを読み込み中...</div>
+      <div class="card" style="padding: 12px; flex: 1; display: flex; flex-direction: column;">
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text);">除外食材リスト</div>
+        <div id="excluded-items-list" style="flex: 1; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; padding: 8px; background: var(--bg-main); font-size: 12px;">
+          <div style="color: var(--text-muted); text-align: center; padding: 16px 0;">読込中...</div>
         </div>
+        <button data-testid="manage-excluded-btn" style="margin-top: 8px; padding: 6px 12px; background: transparent; border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; cursor: pointer;">管理画面へ</button>
       </div>
 
       <!-- 推奨食材リスト -->
+      <div class="card" style="padding: 12px; flex: 1; display: flex; flex-direction: column;">
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text);">推奨食材リスト</div>
+        <div id="recommended-items-list" style="flex: 1; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; padding: 8px; background: var(--bg-main); font-size: 12px;">
+          <div style="color: var(--text-muted); text-align: center; padding: 16px 0;">読込中...</div>
+        </div>
+        <button data-testid="manage-recommended-btn" style="margin-top: 8px; padding: 6px 12px; background: transparent; border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; cursor: pointer;">管理画面へ</button>
+      </div>
+
+      <!-- 更新プレビュー結果 -->
       <div class="card" style="padding: 12px;">
-        <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text);">推奨食材</div>
-        <div data-testid="recommended-items" style="background: var(--bg-main); padding: 10px; border-radius: 4px; min-height: 60px; max-height: 120px; overflow-y: auto;">
-          <div style="font-size: 12px; color: var(--text-muted);">データを読み込み中...</div>
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text);">更新プレビュー</div>
+        <div id="preview-result" style="border: 1px solid var(--border); border-radius: 4px; padding: 8px; background: var(--bg-main); font-size: 12px; min-height: 60px; color: var(--text-muted);">
+          <div style="text-align: center; padding: 12px 0;">パラメータを設定してプレビューボタンを押してください</div>
         </div>
       </div>
 
-      <!-- 更新履歴 -->
-      <div class="card" style="padding: 12px;">
-        <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text);">最終更新</div>
-        <div data-testid="last-update" style="font-size: 12px; color: var(--text-muted);">未更新</div>
-      </div>
+    </div>
+
+  </div>
+
+  <!-- フッター：アクションボタン -->
+  <div style="padding: 12px 16px; border-top: 1px solid var(--border); background: var(--bg-card); display: flex; gap: 8px; justify-content: flex-end;">
+    <button data-testid="preview-button" style="padding: 8px 16px; background: transparent; border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 14px; cursor: pointer; font-weight: 500;">プレビュー</button>
+    <button data-testid="update-button" style="padding: 8px 16px; background: var(--primary); color: #fff; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; font-weight: 500;">更新を実行</button>
+    <button data-testid="cancel-button" style="padding: 8px 16px; background: transparent; border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 14px; cursor: pointer;">キャンセル</button>
+  </div>
+
+</div>
+
+<!-- 確認ダイアログ（初期非表示） -->
+<div id="confirm-dialog-overlay" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+    <h2 style="font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">アルゴリズムを更新しますか？</h2>
+    <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">現在の設定でアルゴリズムを更新します。この操作は取り消せません。</p>
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button id="confirm-cancel-btn" style="padding: 8px 16px; background: transparent; border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 13px; cursor: pointer;">キャンセル</button>
+      <button id="confirm-ok-btn" style="padding: 8px 16px; background: var(--primary); color: #fff; border: none; border-radius: 4px; font-size: 13px; cursor: pointer; font-weight: 500;">更新実行</button>
     </div>
   </div>
 </div>
 
-<!-- モーダル: 更新確認 -->
-<div data-testid="confirm-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
-  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
-    <h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">アルゴリズムを更新しますか？</h2>
-    <p style="margin: 0 0 20px 0; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
-      現在の設定でアルゴリズムを更新します。この操作は取り消せません。
-    </p>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-      <button data-testid="confirm-cancel" class="action-btn secondary" style="padding: 10px; font-size: 13px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: transparent; color: var(--text); font-weight: 500;">キャンセル</button>
-      <button data-testid="confirm-ok" class="action-btn" style="padding: 10px; font-size: 13px; border: none; border-radius: 4px; cursor: pointer; background: var(--primary); color: #fff; font-weight: 500;">更新実行</button>
-    </div>
-  </div>
+<!-- 成功メッセージ（初期非表示） -->
+<div id="success-message" style="display: none; position: fixed; bottom: 16px; right: 16px; background: #10b981; color: #fff; padding: 12px 16px; border-radius: 4px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;">
+  アルゴリズムを更新しました
 </div>
 
-<!-- モーダル: 成功通知 -->
-<div data-testid="success-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
-  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
-    <h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">✓ 更新完了</h2>
-    <p data-testid="success-message" style="margin: 0 0 20px 0; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
-      アルゴリズムが正常に更新されました。
-    </p>
-    <button data-testid="success-close" class="action-btn" style="width: 100%; padding: 10px; font-size: 13px; border: none; border-radius: 4px; cursor: pointer; background: var(--primary); color: #fff; font-weight: 500;">閉じる</button>
-  </div>
+<!-- エラーメッセージ（初期非表示） -->
+<div id="error-message" style="display: none; position: fixed; bottom: 16px; right: 16px; background: #ef4444; color: #fff; padding: 12px 16px; border-radius: 4px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;">
+  エラーが発生しました
 </div></div>
         <div data-aivic-panel="scr-1783678463634" style="display:none"></div>
         <div data-aivic-panel="scr-1783678488970" style="display:none"></div>
