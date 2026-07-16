@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>献立くん - 共通</title>
+  <style>
+:root {
+  --primary: #d97706;
+  --primary-hover: #b45309;
+  --bg-main: #faf5f0;
+  --bg-card: #f3ede5;
+  --bg-sidebar: #efe8df;
+  --border: #e8dfd5;
+  --text: #2d2420;
+  --text-muted: #8b7d6b;
+  --top-bar-bg: #f5ede3;
+  --top-bar-border: #e0d5c7;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-main);
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+header {
+  background: var(--top-bar-bg);
+  border-bottom: 1px solid var(--top-bar-border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+
+.header-logo {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.header-system {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.user-name {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.logout-link {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-left: 1px solid var(--border);
+  padding-left: 12px;
+  transition: color 0.2s;
+}
+
+.logout-link:hover {
+  color: var(--primary);
+}
+
+.container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 240px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.nav-section {
+  padding: 12px 0;
+}
+
+.nav-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 8px 16px;
+  letter-spacing: 0.5px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border-left: 3px solid transparent;
+}
+
+.nav-item:hover {
+  background: rgba(217, 119, 6, 0.08);
+}
+
+.nav-item.aivic-active {
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--primary);
+  border-left-color: var(--primary);
+  font-weight: 500;
+}
+
+.content-area {
+  flex: 1;
+  overflow: auto;
+  background: var(--bg-main);
+}
+
+[data-aivic-panel] {
+  width: 100%;
+  min-height: 100%;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+  header {
+    padding: 0 16px;
+  }
+}
+  </style>
+  
+<script>
+window.AIVIC_API_URL = "https://mkwmoife37uqyv4zhy4yhweozq0oddxn.lambda-url.us-east-1.on.aws/";
+window.AIVIC_APP_ID = "session-1783669154192";
+window.AIVIC_APPLICATION_NAME = "献立くん";
+window.AIVIC_SYSTEM_NAME = "共通";
+window.AIVIC_TABLES = [];
+window.AIVIC_PRESET_SEED = {};
+window.AIVIC_PAGE_SCREEN_ID = "scr-1783761922560";
+window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {\n  const sourcesList = container.querySelector('#sources-list');\n  const detailPanel = container.querySelector('#detail-panel');\n  const sourceModal = container.querySelector('#source-modal');\n  const deleteModal = container.querySelector('#delete-modal');\n  const addSourceBtn = container.querySelector('[data-testid=\"add-source-btn\"]');\n  const modalCancelBtn = container.querySelector('[data-testid=\"modal-cancel-btn\"]');\n  const modalSaveBtn = container.querySelector('[data-testid=\"modal-save-btn\"]');\n  const deleteCancelBtn = container.querySelector('[data-testid=\"delete-cancel-btn\"]');\n  const deleteConfirmBtn = container.querySelector('[data-testid=\"delete-confirm-btn\"]');\n\n  let sources = [];\n  let selectedSourceId = null;\n  let editingSourceId = null;\n\n  // データソース一覧を取得・表示\n  async function loadSources() {\n    sources = await window.aivicApi.list(0) || [];\n    renderSourcesList();\n  }\n\n  // ソース一覧をレンダリング\n  function renderSourcesList() {\n    sourcesList.innerHTML = sources.map(src => `\n      <div data-id=\"${src.id}\" class=\"source-item\" style=\"padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; background: ${selectedSourceId === src.id ? 'var(--bg-main)' : 'transparent'};\" data-testid=\"source-item-${src.id}\">\n        <div style=\"font-size: 13px; font-weight: 500; color: var(--text);\">${src.name || 'Unnamed'}</div>\n        <div style=\"font-size: 11px; color: var(--text-muted); margin-top: 2px;\">\n          <span style=\"display: inline-block; padding: 2px 6px; background: ${src.status === 'connected' ? '#dcfce7' : '#fee2e2'}; color: ${src.status === 'connected' ? '#166534' : '#991b1b'}; border-radius: 3px;\">\n            ${src.status === 'connected' ? '✓ 接続中' : '✗ 未接続'}\n          </span>\n        </div>\n      </div>\n    `).join('');\n\n    // クリックイベント\n    sourcesList.querySelectorAll('.source-item').forEach(item => {\n      item.addEventListener('click', () => {\n        selectedSourceId = item.dataset.id;\n        renderSourcesList();\n        showSourceDetail(selectedSourceId);\n      });\n    });\n  }\n\n  // ソース詳細を表示\n  function showSourceDetail(sourceId) {\n    const source = sources.find(s => s.id === sourceId);\n    if (!source) return;\n\n    const lastSync = source.lastSyncTime ? new Date(source.lastSyncTime).toLocaleString('ja-JP') : '未実行';\n    const syncStatus = source.syncStatus || 'idle';\n\n    detailPanel.innerHTML = `\n      <div style=\"padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;\">\n        <h3 style=\"font-size: 14px; font-weight: 600; margin: 0;\">${source.name}</h3>\n        <div style=\"display: flex; gap: 6px;\">\n          <button data-testid=\"edit-source-btn\" class=\"action-btn secondary\" style=\"padding: 6px 12px; font-size: 12px; background: transparent; border: 1px solid var(--border); color: var(--text);\">編集</button>\n          <button data-testid=\"delete-source-btn\" class=\"action-btn secondary\" style=\"padding: 6px 12px; font-size: 12px; background: transparent; border: 1px solid var(--border); color: var(--text);\">削除</button>\n        </div>\n      </div>\n\n      <div style=\"flex: 1; overflow-y: auto; padding: 16px;\">\n        <!-- 接続状態セクション -->\n        <div style=\"margin-bottom: 20px;\">\n          <h4 style=\"font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0 0 8px 0; text-transform: uppercase;\">接続状態</h4>\n          <div style=\"display: grid; grid-template-columns: 1fr 1fr; gap: 12px;\">\n            <div style=\"background: var(--bg-main); padding: 12px; border-radius: 4px; border: 1px solid var(--border);\">\n              <div style=\"font-size: 11px; color: var(--text-muted); margin-bottom: 4px;\">ステータス</div>\n              <div style=\"font-size: 14px; font-weight: 600; color: ${source.status === 'connected' ? '#16a34a' : '#dc2626'};\">\n                ${source.status === 'connected' ? '✓ 接続中' : '✗ 未接続'}\n              </div>\n            </div>\n            <div style=\"background: var(--bg-main); padding: 12px; border-radius: 4px; border: 1px solid var(--border);\">\n              <div style=\"font-size: 11px; color: var(--text-muted); margin-bottom: 4px;\">最終同期</div>\n              <div style=\"font-size: 12px; color: var(--text);\">${lastSync}</div>\n            </div>\n          </div>\n        </div>\n\n        <!-- 同期セクション -->\n        <div style=\"margin-bottom: 20px;\">\n          <h4 style=\"font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0 0 8px 0; text-transform: uppercase;\">同期管理</h4>\n          <div style=\"display: flex; gap: 8px; margin-bottom: 12px;\">\n            <button data-testid=\"sync-now-btn\" class=\"action-btn\" style=\"padding: 8px 12px; font-size: 12px; flex: 1;\">今すぐ同期</button>\n            <button data-testid=\"sync-schedule-btn\" class=\"action-btn secondary\" style=\"padding: 8px 12px; font-size: 12px; flex: 1; background: transparent; border: 1px solid var(--border); color: var(--text);\">スケジュール設定</button>\n          </div>\n          <div style=\"background: var(--bg-main); padding: 10px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; color: var(--text-muted);\">\n            <div>スケジュール: ${source.syncSchedule || '未設定'}</div>\n            <div style=\"margin-top: 4px;\">同期ステータス: <span style=\"color: var(--text);\">${syncStatus === 'syncing' ? '同期中...' : syncStatus === 'success' ? '成功' : '待機中'}</span></div>\n          </div>\n        </div>\n\n        <!-- 認証情報セクション -->\n        <div style=\"margin-bottom: 20px;\">\n          <h4 style=\"font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0 0 8px 0; text-transform: uppercase;\">認証情報</h4>\n          <div style=\"background: var(--bg-main); padding: 12px; border-radius: 4px; border: 1px solid var(--border);\">\n            <div style=\"font-size: 11px; color: var(--text-muted); margin-bottom: 4px;\">タイプ</div>\n            <div style=\"font-size: 13px; color: var(--text); margin-bottom: 12px;\">${source.sourceType || 'API'}</div>\n            <div style=\"font-size: 11px; color: var(--text-muted); margin-bottom: 4px;\">エンドポイント</div>\n            <div style=\"font-size: 12px; color: var(--text); word-break: break-all; margin-bottom: 12px; font-family: monospace;\">${source.endpoint || '-'}</div>\n            <div style=\"font-size: 11px; color: var(--text-muted); margin-bottom: 4px;\">API キー</div>\n            <div style=\"font-size: 12px; color: var(--text); font-family: monospace;\">••••••••</div>\n          </div>\n        </div>\n\n        <!-- データマッピングセクション -->\n        <div style=\"margin-bottom: 20px;\">\n          <h4 style=\"font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0 0 8px 0; text-transform: uppercase;\">データマッピング</h4>\n          <div style=\"background: var(--bg-main); padding: 12px; border-radius: 4px; border: 1px solid var(--border);\">\n            <table data-testid=\"mapping-table\" style=\"width: 100%; font-size: 12px; border-collapse: collapse;\">\n              <thead>\n                <tr style=\"border-bottom: 1px solid var(--border);\">\n                  <th style=\"text-align: left; padding: 6px 0; color: var(--text); font-weight: 600;\">外部フィールド</th>\n                  <th style=\"text-align: left; padding: 6px 0; color: var(--text); font-weight: 600;\">内部フィールド</th>\n                </tr>\n              </thead>\n              <tbody>\n                ${(source.mappings || []).map(m => `\n                  <tr style=\"border-bottom: 1px solid var(--border);\">\n                    <td style=\"padding: 6px 0; color: var(--text);\">${m.external}</td>\n                    <td style=\"padding: 6px 0; color: var(--text);\">${m.internal}</td>\n                  </tr>\n                `).join('') || '<tr><td colspan=\"2\" style=\"padding: 6px 0; color: var(--text-muted);\">マッピング未設定</td></tr>'}\n              </tbody>\n            </table>\n            <button data-testid=\"edit-mapping-btn\" class=\"action-btn secondary\" style=\"margin-top: 8px; padding: 6px 12px; font-size: 12px; background: transparent; border: 1px solid var(--border); color: var(--text); width: 100%;\">マッピング編集</button>\n          </div>\n        </div>\n\n        <!-- フィルタ条件セクション -->\n        <div>\n          <h4 style=\"font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0 0 8px 0; text-transform: uppercase;\">フィルタ条件</h4>\n          <div style=\"background: var(--bg-main); padding: 12px; border-radius: 4px; border: 1px solid var(--border);\">\n            <div style=\"font-size: 12px; color: var(--text-muted); margin-bottom: 8px;\">\n              ${source.filters && source.filters.length > 0 ? source.filters.map(f => `<div>• ${f}</div>`).join('') : '<div>フィルタ条件なし</div>'}\n            </div>\n            <button data-testid=\"edit-filter-btn\" class=\"action-btn secondary\" style=\"padding: 6px 12px; font-size: 12px; background: transparent; border: 1px solid var(--border); color: var(--text); width: 100%;\">フィルタ編集</button>\n          </div>\n        </div>\n      </div>\n    `;\n\n    // イベントリスナー\n    detailPanel.querySelector('[data-testid=\"edit-source-btn\"]').addEventListener('click', () => openEditModal(sourceId));\n    detailPanel.querySelector('[data-testid=\"delete-source-btn\"]').addEventListener('click', () => openDeleteModal(sourceId));\n    detailPanel.querySelector('[data-testid=\"sync-now-btn\"]').addEventListener('click', () => syncNow(sourceId));\n    detailPanel.querySelector('[data-testid=\"sync-schedule-btn\"]').addEventListener('click', () => openScheduleModal(sourceId));\n    detailPanel.querySelector('[data-testid=\"edit-mapping-btn\"]').addEventListener('click', () => openMappingModal(sourceId));\n    detailPanel.querySelector('[data-testid=\"edit-filter-btn\"]').addEventListener('click', () => openFilterModal(sourceId));\n  }\n\n  // モーダル: 新規追加\n  function openAddModal() {\n    editingSourceId = null;\n    container.querySelector('#modal-title').textContent = '新規データソース追加';\n    container.querySelector('[data-testid=\"source-name-input\"]').value = '';\n    container.querySelector('[data-testid=\"source-type-select\"]').value = '';\n    container.querySelector('[data-testid=\"source-endpoint-input\"]').value = '';\n    container.querySelector('[data-testid=\"source-apikey-input\"]').value = '';\n    sourceModal.style.display = 'flex';\n  }\n\n  // モーダル: 編集\n  function openEditModal(sourceId) {\n    const source = sources.find(s => s.id === sourceId);\n    if (!source) return;\n    editingSourceId = sourceId;\n    container.querySelector('#modal-title').textContent = 'データソース編集';\n    container.querySelector('[data-testid=\"source-name-input\"]').value = source.name || '';\n    container.querySelector('[data-testid=\"source-type-select\"]').value = source.sourceType || '';\n    container.querySelector('[data-testid=\"source-endpoint-input\"]').value = source.endpoint || '';\n    container.querySelector('[data-testid=\"source-apikey-input\"]').value = '';\n    sourceModal.style.display = 'flex';\n  }\n\n  // モーダル: 削除確認\n  function openDeleteModal(sourceId) {\n    editingSourceId = sourceId;\n    deleteModal.style.display = 'flex';\n  }\n\n  // モーダル: スケジュール設定（簡易版）\n  function openScheduleModal(sourceId) {\n    const schedule = prompt('同期スケジュール（例: 毎日 09:00）を入力してください:');\n    if (schedule !== null && editingSourceId === null) {\n      const source = sources.find(s => s.id === sourceId);\n      if (source) {\n        source.syncSchedule = schedule;\n        window.aivicApi.update(0, sourceId, { syncSchedule: schedule });\n        showSourceDetail(sourceId);\n      }\n    }\n  }\n\n  // モーダル: データマッピング編集（簡易版）\n  function openMappingModal(sourceId) {\n    alert('データマッピング編集画面は別途実装予定です');\n  }\n\n  // モーダル: フィルタ条件編集（簡易版）\n  function openFilterModal(sourceId) {\n    alert('フィルタ条件編集画面は別途実装予定です');\n  }\n\n  // 今すぐ同期\n  async function syncNow(sourceId) {\n    const source = sources.find(s => s.id === sourceId);\n    if (!source) return;\n    source.syncStatus = 'syncing';\n    showSourceDetail(sourceId);\n    \n    // 3秒後に完了\n    setTimeout(() => {\n      source.syncStatus = 'success';\n      source.lastSyncTime = new Date().toISOString();\n      window.aivicApi.update(0, sourceId, { syncStatus: 'success', lastSyncTime: source.lastSyncTime });\n      showSourceDetail(sourceId);\n    }, 3000);\n  }\n\n  // モーダルを閉じる\n  function closeSourceModal() {\n    sourceModal.style.display = 'none';\n  }\n\n  function closeDeleteModal() {\n    deleteModal.style.display = 'none';\n  }\n\n  // 保存処理\n  async function saveSource() {\n    const name = container.querySelector('[data-testid=\"source-name-input\"]').value.trim();\n    const sourceType = container.querySelector('[data-testid=\"source-type-select\"]').value;\n    const endpoint = container.querySelector('[data-testid=\"source-endpoint-input\"]').value.trim();\n    const apiKey = container.querySelector('[data-testid=\"source-apikey-input\"]').value.trim();\n\n    if (!name || !sourceType || !endpoint) {\n      alert('必須項目を入力してください');\n      return;\n    }\n\n    const data = {\n      name,\n      sourceType,\n      endpoint,\n      apiKey: apiKey || undefined,\n      status: 'connected',\n      syncStatus: 'idle',\n      lastSyncTime: null,\n      mappings: [],\n      filters: []\n    };\n\n    if (editingSourceId) {\n      await window.aivicApi.update(0, editingSourceId, data);\n    } else {\n      await window.aivicApi.save(0, data);\n    }\n\n    closeSourceModal();\n    await loadSources();\n  }\n\n  // 削除処理\n  async function deleteSource() {\n    if (editingSourceId) {\n      await window.aivicApi.delete(0, editingSourceId);\n      closeDeleteModal();\n      selectedSourceId = null;\n      await loadSources();\n      detailPanel.innerHTML = '<div style=\"padding: 24px; text-align: center; color: var(--text-muted);\">ソースを選択してください</div>';\n    }\n  }\n\n  // イベントリスナー登録\n  addSourceBtn.addEventListener('click', openAddModal);\n  modalCancelBtn.addEventListener('click', closeSourceModal);\n  modalSaveBtn.addEventListener('click', saveSource);\n  deleteCancelBtn.addEventListener('click', closeDeleteModal);\n  deleteConfirmBtn.addEventListener('click', deleteSource);\n\n  // Esc キーでモーダルを閉じる\n  document.addEventListener('keydown', (e) => {\n    if (e.key === 'Escape') {\n      closeSourceModal();\n      closeDeleteModal();\n    }\n  });\n\n  // overlay クリックで閉じる\n  sourceModal.addEventListener('click', (e) => {\n    if (e.target === sourceModal) closeSourceModal();\n  });\n  deleteModal.addEventListener('click', (e) => {\n    if (e.target === deleteModal) closeDeleteModal();\n  });\n\n  // 初期化\n  loadSources();\n}";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<nav style="display:flex;align-items:center;overflow-x:auto;background:var(--top-bar-bg,var(--bg-sidebar,#0e1a31));border-bottom:1px solid var(--top-bar-border,var(--border,#2a3a5d));padding:0 12px;height:40px;flex-shrink:0;"><span data-aivic-app-name style="padding:6px 14px;font-size:13px;font-weight:700;letter-spacing:0.02em;color:var(--text,#e8eefc);white-space:nowrap;">献立くん</span><a href="./scr-1783678243827.html" data-aivic-nav-system="itg-1" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">献立自動生成アプリ</a><a href="./scr-1783678726934.html" data-aivic-nav-system="itg-2" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">栄養管理・分析ダッシュボードシステム</a><a href="./scr-1783761582338.html" data-aivic-nav-system="itg-4" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">需要予測・在庫最適化システム</a><a href="./scr-1783764207077.html" data-aivic-nav-system="itg-5" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">アルゴリズム改善・検証ダッシュボードシステム</a><a href="./scr-1783764819820.html" data-aivic-nav-system="itg-6" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">ユーザーペイン分析・差別化軸検証システム</a><a href="./scr-1783679155883.html" data-aivic-nav-system="itg-3" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">食費管理・最適化システム</a><a href="./scr-1783678285918.html" data-aivic-nav-system="__common__" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:1;border-bottom:2px solid var(--primary,#2b66ff);font-weight:600;">共通</a></nav>
+  <div class="shell">
+    <header>
+      <div class="header-left">
+        <div class="header-logo">献立くん</div>
+        <div class="header-system">共通</div>
+      </div>
+      <div class="header-right">
+        <div class="user-avatar">U</div>
+        <div class="user-name">ユーザー</div>
+        <a href="./login.html" class="logout-link">ログアウト</a>
+      </div>
+    </header>
+
+    <div class="container">
+      <aside class="sidebar">
+        <nav class="nav-section">
+          <div class="nav-section-title">管理</div>
+          <a data-aivic-nav="scr-1783678285918" onclick="window.showScreen('scr-1783678285918')" class="nav-item">
+            アレルギー・食事制限
+          </a>
+          <a data-aivic-nav="scr-1783678463634" onclick="window.showScreen('scr-1783678463634')" class="nav-item">
+            優先条件設定
+          </a>
+          <a data-aivic-nav="scr-1783678782157" onclick="window.showScreen('scr-1783678782157')" class="nav-item">
+            改善提案・通知配信
+          </a>
+        </nav>
+
+        <nav class="nav-section">
+          <div class="nav-section-title">生成・監視</div>
+          <a data-aivic-nav="scr-1783678313897" onclick="window.showScreen('scr-1783678313897')" class="nav-item">
+            献立生成ログ・監視
+          </a>
+          <a data-aivic-nav="scr-1783678410041" onclick="window.showScreen('scr-1783678410041')" class="nav-item">
+            アルゴリズム更新
+          </a>
+          <a data-aivic-nav="scr-1783678488970" onclick="window.showScreen('scr-1783678488970')" class="nav-item">
+            ロジック更新処理
+          </a>
+        </nav>
+
+        <nav class="nav-section">
+          <div class="nav-section-title">分析・連携</div>
+          <a data-aivic-nav="scr-1783678530168" onclick="window.showScreen('scr-1783678530168')" class="nav-item">
+            ログ抽出・分析
+          </a>
+          <a data-aivic-nav="scr-1783761922560" onclick="window.showScreen('scr-1783761922560')" class="nav-item">
+            外部データソース連携
+          </a>
+        </nav>
+      </aside>
+
+      <main class="content-area">
+        <div data-aivic-panel="scr-1783678285918" style="display:none"></div>
+        <div data-aivic-panel="scr-1783678313897" style="display:none"></div>
+        <div data-aivic-panel="scr-1783678410041" style="display:none"></div>
+        <div data-aivic-panel="scr-1783678463634" style="display:none"></div>
+        <div data-aivic-panel="scr-1783678488970" style="display:none"></div>
+        <div data-aivic-panel="scr-1783678530168" style="display:none"></div>
+        <div data-aivic-panel="scr-1783678782157" style="display:none"></div>
+        <div data-aivic-panel="scr-1783761922560" style="display:block"><div style="display: flex; flex-direction: column; height: 100%; background: var(--bg-main); color: var(--text);">
+  <!-- ヘッダー -->
+  <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-card);">
+    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">献立くん / 共通 / 外部データソース連携管理画面</div>
+    <h1 style="font-size: 20px; font-weight: 600; margin: 0;">外部データソース連携管理</h1>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <div style="display: flex; flex: 1; overflow: hidden; gap: 12px; padding: 12px;">
+    
+    <!-- 左パネル: データソース一覧 -->
+    <div style="width: 280px; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
+      <div style="padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 13px; font-weight: 600; margin: 0;">接続済みソース</h2>
+        <button data-testid="add-source-btn" class="action-btn" style="padding: 4px 8px; font-size: 12px;">+ 追加</button>
+      </div>
+      <div id="sources-list" style="flex: 1; overflow-y: auto;">
+        <!-- リスト項目は initJs で動的生成 -->
+      </div>
+    </div>
+
+    <!-- 右パネル: 詳細設定 -->
+    <div style="flex: 1; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
+      <div id="detail-panel" style="display: flex; flex-direction: column; height: 100%; overflow-y: auto;">
+        <!-- 詳細パネルは initJs で動的生成 -->
+        <div style="padding: 24px; text-align: center; color: var(--text-muted);">
+          ソースを選択してください
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル: データソース追加/編集 -->
+<div id="source-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 500px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+    <h2 id="modal-title" style="font-size: 16px; font-weight: 600; margin: 0 0 16px 0;">新規データソース追加</h2>
+    
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+      <div>
+        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">ソース名</label>
+        <input data-testid="source-name-input" type="text" class="input" placeholder="例: 外部食材DB" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;">
+      </div>
+      
+      <div>
+        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">ソースタイプ</label>
+        <select data-testid="source-type-select" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;">
+          <option value="">選択してください</option>
+          <option value="api">REST API</option>
+          <option value="database">データベース</option>
+          <option value="csv">CSV/Excel</option>
+          <option value="webhook">Webhook</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">エンドポイント/接続先</label>
+        <input data-testid="source-endpoint-input" type="text" placeholder="https://api.example.com/v1/..." style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;">
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">API キー / 認証情報</label>
+        <input data-testid="source-apikey-input" type="password" placeholder="••••••••" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;">
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button data-testid="modal-cancel-btn" class="action-btn secondary" style="padding: 8px 16px; font-size: 13px; background: transparent; border: 1px solid var(--border); color: var(--text);">キャンセル</button>
+      <button data-testid="modal-save-btn" class="action-btn" style="padding: 8px 16px; font-size: 13px;">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル: 削除確認 -->
+<div id="delete-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+    <h2 style="font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">削除確認</h2>
+    <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">このデータソースを削除してもよろしいですか？</p>
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button data-testid="delete-cancel-btn" class="action-btn secondary" style="padding: 8px 16px; font-size: 13px; background: transparent; border: 1px solid var(--border); color: var(--text);">キャンセル</button>
+      <button data-testid="delete-confirm-btn" class="action-btn" style="padding: 8px 16px; font-size: 13px; background: #dc2626; color: #fff;">削除</button>
+    </div>
+  </div>
+</div></div>
+      </main>
+    </div>
+  </div>
+
+  
+<script>
+(function() {
+  var TABLE_DEFS = window.AIVIC_TABLES || [];
+  var PRESET_SEED = window.AIVIC_PRESET_SEED || {};
+  var SYSTEM_NAME = window.AIVIC_SYSTEM_NAME || "";
+  var APP_ID = window.AIVIC_APP_ID || "";
+  var API_URL = (window.AIVIC_API_URL && window.AIVIC_API_URL !== "REPLACE_WITH_API_URL")
+    ? window.AIVIC_API_URL : window.location.origin;
+
+  // 通知 helper ( SPA 版と同じ )
+  window.aivicNotify = (function() {
+    function ensureContainer() {
+      var c = document.getElementById("aivic-toast-container");
+      if (c) return c;
+      c = document.createElement("div");
+      c.id = "aivic-toast-container";
+      c.style.cssText = "position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:360px;";
+      document.body.appendChild(c);
+      return c;
+    }
+    function show(msg, type) {
+      var c = ensureContainer();
+      var el = document.createElement("div");
+      el.textContent = msg;
+      el.style.cssText = "padding:10px 16px;border-radius:8px;font-size:13px;line-height:1.4;pointer-events:auto;color:#fff;background:" + (type === "error" ? "#dc2626" : "#d97706");
+      c.appendChild(el);
+      setTimeout(function() {
+        el.style.transition = "opacity .3s";
+        el.style.opacity = "0";
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 320);
+      }, type === "error" ? 6000 : 4500);
+    }
+    return {
+      error: function(msg) { show("❌ " + msg, "error"); },
+      warn:  function(msg) { show("⚠️ " + msg, "warn"); },
+    };
+  })();
+
+  // CRUD API ( SPA 版と同じ )
+  window.aivicApi = (function() {
+    function dbErr(op) { window.aivicNotify.error("データベースエラー ( " + op + " ): APIサーバーに接続できません。"); }
+    function newId() { return typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(36).slice(2); }
+    function q(i) {
+      var t = TABLE_DEFS[i];
+      var dbP = (window.AIVIC_DB_TYPE && window.AIVIC_DB_TYPE !== "dynamodb") ? "&db=" + encodeURIComponent(window.AIVIC_DB_TYPE) : "";
+      return "?app=" + encodeURIComponent(APP_ID) + "&system=" + encodeURIComponent(SYSTEM_NAME) + "&table=" + encodeURIComponent(t ? t.tableName : "table" + i) + dbP;
+    }
+    return {
+      list: async function(tableIndex) {
+        if (!API_URL) return [];
+        try { var r = await fetch(API_URL + "/api/" + tableIndex + q(tableIndex)); var d = await r.json(); return Array.isArray(d) ? d : (d.items || []); }
+        catch(e) { dbErr("データ取得"); return []; }
+      },
+      save: async function(tableIndex, item) {
+        if (!API_URL) { dbErr("保存"); return null; }
+        var now = new Date().toISOString();
+        var rec = Object.assign({}, item, { id: item.id || newId(), createdAt: item.createdAt || now, updatedAt: now });
+        try { var r = await fetch(API_URL + "/api/" + tableIndex + q(tableIndex), { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(rec) }); return await r.json(); }
+        catch(e) { dbErr("保存"); return null; }
+      },
+      update: async function(tableIndex, id, changes) {
+        if (!API_URL) { dbErr("更新"); return null; }
+        try { var r = await fetch(API_URL + "/api/" + tableIndex + "/" + id + q(tableIndex), { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(Object.assign({}, changes, {updatedAt: new Date().toISOString()})) }); return await r.json(); }
+        catch(e) { dbErr("更新"); return null; }
+      },
+      delete: async function(tableIndex, id) {
+        if (!API_URL) { dbErr("削除"); return {deleted:false}; }
+        try { await fetch(API_URL + "/api/" + tableIndex + "/" + id + q(tableIndex), {method:"DELETE"}); return {deleted:true}; }
+        catch(e) { dbErr("削除"); return {deleted:false}; }
+      },
+    };
+  })();
+
+  // showScreen はマルチページ構成ではページ遷移として動く。
+  var _aivicNavLastTime = 0;
+  var _aivicNavLastTarget = "";
+  var _aivicReady = false;
+  window.showScreen = function(screenId) {
+    if (!screenId) return;
+    if (screenId === window.AIVIC_PAGE_SCREEN_ID) return;
+    var targetPath = './' + encodeURIComponent(screenId) + '.html';
+    var currentName = (window.location.pathname.split('/').pop() || '');
+    if (currentName === (encodeURIComponent(screenId) + '.html') ||
+        currentName === (screenId + '.html')) {
+      return;
+    }
+    var now = Date.now();
+    if (_aivicNavLastTarget === targetPath && (now - _aivicNavLastTime) < 100) {
+      console.warn('[aivic] showScreen 連続呼び出し検知。 無限ループ防止のため抑制:', screenId);
+      return;
+    }
+    if (!_aivicReady) {
+      console.warn('[aivic] DOMContentLoaded 前の showScreen 呼び出し。 抑制:', screenId);
+      return;
+    }
+    _aivicNavLastTime = now;
+    _aivicNavLastTarget = targetPath;
+    window.location.href = targetPath;
+  };
+
+  function seedAllIfEmpty() {
+    if (!API_URL) return Promise.resolve();
+    return Promise.all(TABLE_DEFS.map(function(t, i) {
+      var preset = PRESET_SEED[t.tableName];
+      if (!Array.isArray(preset) || preset.length === 0) return Promise.resolve();
+      return window.aivicApi.list(i).then(function(existing) {
+        if (existing && existing.length > 0) return;
+        return Promise.all(preset.map(function(row) { return window.aivicApi.save(i, row); }));
+      }).catch(function() {});
+    }));
+  }
+
+  // ── 初期表示: このページ専用の panel に initFn を実行 ──
+  document.addEventListener("DOMContentLoaded", function() {
+    setTimeout(function() { _aivicReady = true; }, 1500);
+    var pageScreenId = window.AIVIC_PAGE_SCREEN_ID;
+    if (!pageScreenId) return;
+
+    document.querySelectorAll('[data-aivic-nav]').forEach(function(btn) {
+      var isActive = btn.getAttribute("data-aivic-nav") === pageScreenId;
+      btn.classList.toggle("aivic-active", isActive);
+      btn.setAttribute("aria-current", isActive ? "page" : "false");
+    });
+
+    var container = document.querySelector('[data-aivic-panel="' + pageScreenId + '"]');
+    if (!container) return;
+
+    // content 要素の hidden 強制除去 ( 2026-05-24 Playwright 大量 fail 対応 )
+    var isModalLike = function(el) {
+      if (!el || !el.classList) return false;
+      var cn = String(el.className || "");
+      if (/\bmodal\b|\bdialog\b|\boverlay\b|\bpopup\b|\bdropdown\b|\btooltip\b/i.test(cn)) return true;
+      var role = el.getAttribute && el.getAttribute("role");
+      if (role === "dialog" || role === "alertdialog" || role === "tooltip" || role === "menu") return true;
+      if (el.hasAttribute && (el.hasAttribute("data-modal") || el.hasAttribute("data-dropdown") || el.hasAttribute("data-popup") || el.hasAttribute("data-aivic-overlay"))) return true;
+      // 【2026-06-25】 class/role が無くても inline で画面を覆う overlay ( position:fixed ) は modal 扱いにして、
+      //  content 強制可視化が誤ってダイアログをロード時に表示してしまわないようにする。
+      if (el.style && el.style.position === "fixed") return true;
+      return false;
+    };
+    var unhideContentElements = function(root) {
+      var all = root.querySelectorAll('.hidden, [hidden], [style*="display:none"], [style*="display: none"]');
+      for (var k = 0; k < all.length; k++) {
+        var el = all[k];
+        if (isModalLike(el)) continue;
+        var p = el.parentElement;
+        var insideModal = false;
+        while (p && p !== root) {
+          if (isModalLike(p)) { insideModal = true; break; }
+          p = p.parentElement;
+        }
+        if (insideModal) continue;
+        el.classList.remove('hidden');
+        el.removeAttribute('hidden');
+        if (el.style && el.style.display === 'none') el.style.display = '';
+      }
+    };
+    try { unhideContentElements(container); } catch (e) { console.warn('[aivic] unhideContent failed:', e); }
+
+    var initJsSource = window.AIVIC_PAGE_INIT_JS;
+    if (!initJsSource) {
+      seedAllIfEmpty();
+      return;
+    }
+    var initFn = null;
+    try {
+      initFn = (new Function("return (" + initJsSource + ")"))();
+    } catch (e) {
+      console.error("[aivic] initJs compile error:", pageScreenId, e);
+      return;
+    }
+    if (typeof initFn !== "function") return;
+
+    seedAllIfEmpty().then(function() {
+      return Promise.all(TABLE_DEFS.map(function(t, i) {
+        return window.aivicApi.list(i)
+          .then(function(records) { return Object.assign({}, t, { records: records }); })
+          .catch(function() { return Object.assign({}, t, { records: [] }); });
+      }));
+    }).then(function(tables) {
+      try { initFn(container, API_URL, tables); } catch (e) { console.error("[aivic] initFn error:", pageScreenId, e); }
+      _aivicReady = true;
+    });
+  });
+
+  // 【2026-06-27 強化・必ず閉じられる保証】 モーダル/ダイアログを確実に閉じる安全網。
+  //  旧版は Esc のみ + セレクタ .overlay が class="modal-overlay" にマッチせず ( クラストークンが別 )
+  //  閉じられなかった ( ユーザー報告 2026-06-27: ダイアログが閉じない ) 。 ① Esc ② オーバーレイ背景クリック
+  //  ③ 閉じる系ボタン の 3 経路で閉じる。 セレクタは複合クラスも拾うよう [class*="overlay"] を含む。
+  //  閉じ方は「開クラス ( active/open/show 等 ) があれば外す ( 再オープン可 ) 、 無ければ inline display:none」。
+  //  modal-header 等の sub-part を誤って隠さないため [class*="modal"] は使わない。
+  var AIVIC_OVERLAY_SELECTOR = '[class*="overlay"],[data-aivic-overlay],[data-modal],[role="dialog"],[role="alertdialog"]';
+  var aivicCloseOverlay = function(el) {
+    if (!el || !el.classList) return;
+    var openClasses = ["active", "open", "show", "visible", "is-open", "is-active", "show-modal"];
+    var removed = false;
+    for (var c = 0; c < openClasses.length; c++) {
+      if (el.classList.contains(openClasses[c])) { el.classList.remove(openClasses[c]); removed = true; }
+    }
+    if (!removed && el.style) el.style.display = "none";
+  };
+  document.addEventListener("keydown", function(e) {
+    if (e.key !== "Escape" && e.keyCode !== 27) return;
+    var ov = document.querySelectorAll(AIVIC_OVERLAY_SELECTOR);
+    for (var i = 0; i < ov.length; i++) aivicCloseOverlay(ov[i]);
+  });
+  document.addEventListener("click", function(e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.closest) {
+      var closer = t.closest('.modal-close,[data-modal-close],[data-close],[data-dismiss]');
+      if (closer) {
+        var oc = closer.closest(AIVIC_OVERLAY_SELECTOR);
+        if (oc) { aivicCloseOverlay(oc); return; }
+      }
+    }
+    // 背景 ( オーバーレイ要素そのもの ) を直接クリックした時のみ閉じる ( モーダル本体クリックでは閉じない ) 。
+    if (t.matches && t.matches(AIVIC_OVERLAY_SELECTOR) && t === e.target) {
+      aivicCloseOverlay(t);
+    }
+  });
+  // 【2026-06-28 強化・ロード時に必ず閉じる】 生成 AI が overlay を初期 display:none にし忘れた場合でも、
+  //  ロード直後にダイアログが画面を覆って操作不能になる事故 ( ユーザー報告 2026-06-28: ダイアログが常に表示され
+  //  閉じられない ) を防ぐ。 認識可能な overlay/dialog セレクタに該当する要素はロード時に必ず閉じる
+  //  ( 開クラス除去 or display:none ) 。 真にロード時表示すべき業務コンテンツは overlay セレクタに該当しないため
+  //  影響しない ( パネルコンテナは data-aivic-panel で別管理 ) 。
+  var aivicHideOverlaysOnLoad = function() {
+    var ov = document.querySelectorAll(AIVIC_OVERLAY_SELECTOR);
+    for (var i = 0; i < ov.length; i++) aivicCloseOverlay(ov[i]);
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", aivicHideOverlaysOnLoad);
+  } else {
+    aivicHideOverlaysOnLoad();
+  }
+})();
+
+</script>
+</body>
+</html>

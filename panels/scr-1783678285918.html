@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>献立くん - 共通</title>
+  <style>
+:root {
+  --primary: #d97706;
+  --primary-hover: #b45309;
+  --bg-main: #faf5f0;
+  --bg-card: #f3ede5;
+  --bg-sidebar: #efe8df;
+  --border: #e8dfd5;
+  --text: #2d2420;
+  --text-muted: #8b7d6b;
+  --top-bar-bg: #f5ede3;
+  --top-bar-border: #e0d5c7;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-main);
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+header {
+  background: var(--top-bar-bg);
+  border-bottom: 1px solid var(--top-bar-border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+
+.header-logo {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.header-system {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.user-name {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.logout-link {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-left: 1px solid var(--border);
+  padding-left: 12px;
+  transition: color 0.2s;
+}
+
+.logout-link:hover {
+  color: var(--primary);
+}
+
+.container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 240px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.nav-section {
+  padding: 12px 0;
+}
+
+.nav-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 8px 16px;
+  letter-spacing: 0.5px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border-left: 3px solid transparent;
+}
+
+.nav-item:hover {
+  background: rgba(217, 119, 6, 0.08);
+}
+
+.nav-item.aivic-active {
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--primary);
+  border-left-color: var(--primary);
+  font-weight: 500;
+}
+
+.content-area {
+  flex: 1;
+  overflow: auto;
+  background: var(--bg-main);
+}
+
+[data-aivic-panel] {
+  width: 100%;
+  min-height: 100%;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+  header {
+    padding: 0 16px;
+  }
+}
+  </style>
+  
+<script>
+window.AIVIC_API_URL = "https://mkwmoife37uqyv4zhy4yhweozq0oddxn.lambda-url.us-east-1.on.aws/";
+window.AIVIC_APP_ID = "session-1783669154192";
+window.AIVIC_APPLICATION_NAME = "献立くん";
+window.AIVIC_SYSTEM_NAME = "共通";
+window.AIVIC_TABLES = [];
+window.AIVIC_PRESET_SEED = {};
+window.AIVIC_PAGE_SCREEN_ID = "scr-1783678285918";
+window.AIVIC_PAGE_INIT_JS = "function(container, apiUrl, tables) {}";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<nav style="display:flex;align-items:center;overflow-x:auto;background:var(--top-bar-bg,var(--bg-sidebar,#0e1a31));border-bottom:1px solid var(--top-bar-border,var(--border,#2a3a5d));padding:0 12px;height:40px;flex-shrink:0;"><span data-aivic-app-name style="padding:6px 14px;font-size:13px;font-weight:700;letter-spacing:0.02em;color:var(--text,#e8eefc);white-space:nowrap;">献立くん</span><a href="./scr-1783678243827.html" data-aivic-nav-system="itg-1" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">献立自動生成アプリ</a><a href="./scr-1783678726934.html" data-aivic-nav-system="itg-2" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">栄養管理・分析ダッシュボードシステム</a><a href="./scr-1783761582338.html" data-aivic-nav-system="itg-4" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">需要予測・在庫最適化システム</a><a href="./scr-1783764207077.html" data-aivic-nav-system="itg-5" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">アルゴリズム改善・検証ダッシュボードシステム</a><a href="./scr-1783764819820.html" data-aivic-nav-system="itg-6" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">ユーザーペイン分析・差別化軸検証システム</a><a href="./scr-1783679155883.html" data-aivic-nav-system="itg-3" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:0.6;border-bottom:2px solid transparent;font-weight:400;">食費管理・最適化システム</a><a href="./scr-1783678285918.html" data-aivic-nav-system="__common__" style="padding:6px 14px;text-decoration:none;font-size:13px;white-space:nowrap;color:var(--text,#e8eefc);opacity:1;border-bottom:2px solid var(--primary,#2b66ff);font-weight:600;">共通</a></nav>
+  <div class="shell">
+    <header>
+      <div class="header-left">
+        <div class="header-logo">献立くん</div>
+        <div class="header-system">共通</div>
+      </div>
+      <div class="header-right">
+        <div class="user-avatar">U</div>
+        <div class="user-name">ユーザー</div>
+        <a href="./login.html" class="logout-link">ログアウト</a>
+      </div>
+    </header>
+
+    <div class="container">
+      <aside class="sidebar">
+        <nav class="nav-section">
+          <div class="nav-section-title">管理</div>
+          <a data-aivic-nav="scr-1783678285918" onclick="window.showScreen('scr-1783678285918')" class="nav-item">
+            アレルギー・食事制限
+          </a>
+          <a data-aivic-nav="scr-1783678463634" onclick="window.showScreen('scr-1783678463634')" class="nav-item">
+            優先条件設定
+          </a>
+          <a data-aivic-nav="scr-1783678782157" onclick="window.showScreen('scr-1783678782157')" class="nav-item">
+            改善提案・通知配信
+          </a>
+        </nav>
+
+        <nav class="nav-section">
+          <div class="nav-section-title">生成・監視</div>
+          <a data-aivic-nav="scr-1783678313897" onclick="window.showScreen('scr-1783678313897')" class="nav-item">
+            献立生成ログ・監視
+          </a>
+          <a data-aivic-nav="scr-1783678410041" onclick="window.showScreen('scr-1783678410041')" class="nav-item">
+            アルゴリズム更新
+          </a>
+          <a data-aivic-nav="scr-1783678488970" onclick="window.showScreen('scr-1783678488970')" class="nav-item">
+            ロジック更新処理
+          </a>
+        </nav>
+
+        <nav class="nav-section">
+          <div class="nav-section-title">分析・連携</div>
+          <a data-aivic-nav="scr-1783678530168" onclick="window.showScreen('scr-1783678530168')" class="nav-item">
+            ログ抽出・分析
+          </a>
+          <a data-aivic-nav="scr-1783761922560" onclick="window.showScreen('scr-1783761922560')" class="nav-item">
+            外部データソース連携
+          </a>
+        </nav>
+      </aside>
+
+      <main class="content-area">
+        <div data-aivic-panel="scr-1783678285918" style="display:block"><div style="display: flex; flex-direction: column; height: 100%; background: var(--bg-main); color: var(--text);">
+  <!-- ヘッダー -->
+  <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-card);">
+    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">献立くん・共通・アレルギー・食事制限管理画面</div>
+    <h1 style="font-size: 18px; font-weight: 600; margin: 0;">アレルギー・食事制限管理</h1>
+  </div>
+
+  <!-- KPI カード群 -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; padding: 12px 16px; background: var(--bg-main);">
+    <div class="card" style="padding: 12px; text-align: center;">
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">登録成員数</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--primary);" data-testid="kpi-members">0</div>
+    </div>
+    <div class="card" style="padding: 12px; text-align: center;">
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">アレルギー件数</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--primary);" data-testid="kpi-allergies">0</div>
+    </div>
+    <div class="card" style="padding: 12px; text-align: center;">
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">食事制限件数</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--primary);" data-testid="kpi-restrictions">0</div>
+    </div>
+    <div class="card" style="padding: 12px; text-align: center;">
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">重症度「高」</div>
+      <div style="font-size: 24px; font-weight: 700; color: #dc2626;" data-testid="kpi-severe">0</div>
+    </div>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <div style="display: flex; flex: 1; gap: 12px; padding: 12px 16px; overflow: hidden;">
+    <!-- 左: 家族成員リスト -->
+    <div style="width: 200px; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
+      <div style="padding: 8px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text);">家族成員</div>
+      <div style="flex: 1; overflow-y: auto;">
+        <div id="members-list" style="padding: 4px;"></div>
+      </div>
+    </div>
+
+    <!-- 右: 詳細管理エリア -->
+    <div style="flex: 1; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
+      <!-- タブ -->
+      <div style="display: flex; border-bottom: 1px solid var(--border); background: var(--bg-main);">
+        <button class="tab-btn" data-tab="allergies" style="flex: 1; padding: 10px; border: none; background: transparent; color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid var(--primary);" data-testid="tab-allergies">アレルギー</button>
+        <button class="tab-btn" data-tab="restrictions" style="flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent;" data-testid="tab-restrictions">食事制限</button>
+      </div>
+
+      <!-- タブコンテンツ -->
+      <div style="flex: 1; overflow-y: auto; padding: 12px;">
+        <!-- アレルギータブ -->
+        <div id="tab-allergies-content" class="tab-content" style="display: block;">
+          <div style="margin-bottom: 12px;">
+            <button class="action-btn" id="add-allergy-btn" style="width: 100%; padding: 8px; font-size: 13px;" data-testid="add-allergy-button">+ アレルギー追加</button>
+          </div>
+          <div id="allergies-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          <div id="allergies-empty" style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px;">アレルギー情報がありません</div>
+        </div>
+
+        <!-- 食事制限タブ -->
+        <div id="tab-restrictions-content" class="tab-content" style="display: none;">
+          <div style="margin-bottom: 12px;">
+            <button class="action-btn" id="add-restriction-btn" style="width: 100%; padding: 8px; font-size: 13px;" data-testid="add-restriction-button">+ 食事制限追加</button>
+          </div>
+          <div id="restrictions-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          <div id="restrictions-empty" style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px;">食事制限がありません</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル: アレルギー追加・編集 -->
+<div id="allergy-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+    <h2 style="font-size: 16px; font-weight: 600; margin: 0 0 16px 0;" id="allergy-modal-title">アレルギー追加</h2>
+    
+    <div style="margin-bottom: 12px;">
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">成員名</label>
+      <input id="allergy-member-name" type="text" readonly style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;" />
+    </div>
+
+    <div style="margin-bottom: 12px;">
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">アレルギー名 *</label>
+      <input id="allergy-name" type="text" placeholder="例: 卵、牛乳、ピーナッツ" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text); font-size: 13px; box-sizing: border-box;" data-testid="allergy-name-input" />
+    </div>
+
+    <div style="margin-bottom: 12px;">
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">重症度 *</label>
+      <select id="allergy-severity" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text); font-size: 13px; box-sizing: border-box;" data-testid="allergy-severity-select">
+        <option value="">選択してください</option>
+        <option value="軽">軽</option>
+        <option value="中">中</option>
+        <option value="高">高</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">発症日</label>
+      <input id="allergy-onset-date" type="date" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text); font-size: 13px; box-sizing: border-box;" data-testid="allergy-onset-date-input" />
+    </div>
+
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button class="action-btn secondary" id="allergy-modal-cancel" style="padding: 8px 16px; font-size: 13px;" data-testid="allergy-cancel-button">キャンセル</button>
+      <button class="action-btn" id="allergy-modal-save" style="padding: 8px 16px; font-size: 13px;" data-testid="allergy-save-button">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル: 食事制限追加・編集 -->
+<div id="restriction-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+    <h2 style="font-size: 16px; font-weight: 600; margin: 0 0 16px 0;" id="restriction-modal-title">食事制限追加</h2>
+    
+    <div style="margin-bottom: 12px;">
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">成員名</label>
+      <input id="restriction-member-name" type="text" readonly style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-main); color: var(--text); font-size: 13px; box-sizing: border-box;" />
+    </div>
+
+    <div style="margin-bottom: 12px;">
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">制限種別 *</label>
+      <select id="restriction-type" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text); font-size: 13px; box-sizing: border-box;" data-testid="restriction-type-select">
+        <option value="">選択してください</option>
+        <option value="ベジタリアン">ベジタリアン</option>
+        <option value="ヴィーガン">ヴィーガン</option>
+        <option value="ハラール">ハラール</option>
+        <option value="コーシャー">コーシャー</option>
+        <option value="グルテンフリー">グルテンフリー</option>
+        <option value="その他">その他</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom: 12px;">
+      <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">詳細説明</label>
+      <textarea id="restriction-notes" placeholder="例: 豚肉のみ避ける" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text); font-size: 13px; box-sizing: border-box; resize: vertical; min-height: 60px;" data-testid="restriction-notes-input"></textarea>
+    </div>
+
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button class="action-btn secondary" id="restriction-modal-cancel" style="padding: 8px 16px; font-size: 13px;" data-testid="restriction-cancel-button">キャンセル</button>
+      <button class="action-btn" id="restriction-modal-save" style="padding: 8px 16px; font-size: 13px;" data-testid="restriction-save-button">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル: 削除確認 -->
+<div id="delete-confirm-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-card); color: var(--text); padding: 24px; border-radius: 8px; max-width: 350px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+    <h2 style="font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">削除確認</h2>
+    <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 20px 0;" id="delete-confirm-message">この項目を削除してもよろしいですか？</p>
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button class="action-btn secondary" id="delete-confirm-cancel" style="padding: 8px 16px; font-size: 13px;" data-testid="delete-cancel-button">キャンセル</button>
+      <button id="delete-confirm-ok" style="padding: 8px 16px; font-size: 13px; background: #dc2626; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;" data-testid="delete-confirm-button">削除</button>
+    </div>
+  </div>
+</div></div>
+        <div data-aivic-panel="scr-1783678313897" style="display:none"></div>
+        <div data-aivic-panel="scr-1783678410041" style="display:none"></div>
+        <div data-aivic-panel="scr-1783678463634" style="display:none"></div>
+        <div data-aivic-panel="scr-1783678488970" style="display:none"></div>
+        <div data-aivic-panel="scr-1783678530168" style="display:none"></div>
+        <div data-aivic-panel="scr-1783678782157" style="display:none"></div>
+        <div data-aivic-panel="scr-1783761922560" style="display:none"></div>
+      </main>
+    </div>
+  </div>
+
+  
+<script>
+(function() {
+  var TABLE_DEFS = window.AIVIC_TABLES || [];
+  var PRESET_SEED = window.AIVIC_PRESET_SEED || {};
+  var SYSTEM_NAME = window.AIVIC_SYSTEM_NAME || "";
+  var APP_ID = window.AIVIC_APP_ID || "";
+  var API_URL = (window.AIVIC_API_URL && window.AIVIC_API_URL !== "REPLACE_WITH_API_URL")
+    ? window.AIVIC_API_URL : window.location.origin;
+
+  // 通知 helper ( SPA 版と同じ )
+  window.aivicNotify = (function() {
+    function ensureContainer() {
+      var c = document.getElementById("aivic-toast-container");
+      if (c) return c;
+      c = document.createElement("div");
+      c.id = "aivic-toast-container";
+      c.style.cssText = "position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:360px;";
+      document.body.appendChild(c);
+      return c;
+    }
+    function show(msg, type) {
+      var c = ensureContainer();
+      var el = document.createElement("div");
+      el.textContent = msg;
+      el.style.cssText = "padding:10px 16px;border-radius:8px;font-size:13px;line-height:1.4;pointer-events:auto;color:#fff;background:" + (type === "error" ? "#dc2626" : "#d97706");
+      c.appendChild(el);
+      setTimeout(function() {
+        el.style.transition = "opacity .3s";
+        el.style.opacity = "0";
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 320);
+      }, type === "error" ? 6000 : 4500);
+    }
+    return {
+      error: function(msg) { show("❌ " + msg, "error"); },
+      warn:  function(msg) { show("⚠️ " + msg, "warn"); },
+    };
+  })();
+
+  // CRUD API ( SPA 版と同じ )
+  window.aivicApi = (function() {
+    function dbErr(op) { window.aivicNotify.error("データベースエラー ( " + op + " ): APIサーバーに接続できません。"); }
+    function newId() { return typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(36).slice(2); }
+    function q(i) {
+      var t = TABLE_DEFS[i];
+      var dbP = (window.AIVIC_DB_TYPE && window.AIVIC_DB_TYPE !== "dynamodb") ? "&db=" + encodeURIComponent(window.AIVIC_DB_TYPE) : "";
+      return "?app=" + encodeURIComponent(APP_ID) + "&system=" + encodeURIComponent(SYSTEM_NAME) + "&table=" + encodeURIComponent(t ? t.tableName : "table" + i) + dbP;
+    }
+    return {
+      list: async function(tableIndex) {
+        if (!API_URL) return [];
+        try { var r = await fetch(API_URL + "/api/" + tableIndex + q(tableIndex)); var d = await r.json(); return Array.isArray(d) ? d : (d.items || []); }
+        catch(e) { dbErr("データ取得"); return []; }
+      },
+      save: async function(tableIndex, item) {
+        if (!API_URL) { dbErr("保存"); return null; }
+        var now = new Date().toISOString();
+        var rec = Object.assign({}, item, { id: item.id || newId(), createdAt: item.createdAt || now, updatedAt: now });
+        try { var r = await fetch(API_URL + "/api/" + tableIndex + q(tableIndex), { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(rec) }); return await r.json(); }
+        catch(e) { dbErr("保存"); return null; }
+      },
+      update: async function(tableIndex, id, changes) {
+        if (!API_URL) { dbErr("更新"); return null; }
+        try { var r = await fetch(API_URL + "/api/" + tableIndex + "/" + id + q(tableIndex), { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(Object.assign({}, changes, {updatedAt: new Date().toISOString()})) }); return await r.json(); }
+        catch(e) { dbErr("更新"); return null; }
+      },
+      delete: async function(tableIndex, id) {
+        if (!API_URL) { dbErr("削除"); return {deleted:false}; }
+        try { await fetch(API_URL + "/api/" + tableIndex + "/" + id + q(tableIndex), {method:"DELETE"}); return {deleted:true}; }
+        catch(e) { dbErr("削除"); return {deleted:false}; }
+      },
+    };
+  })();
+
+  // showScreen はマルチページ構成ではページ遷移として動く。
+  var _aivicNavLastTime = 0;
+  var _aivicNavLastTarget = "";
+  var _aivicReady = false;
+  window.showScreen = function(screenId) {
+    if (!screenId) return;
+    if (screenId === window.AIVIC_PAGE_SCREEN_ID) return;
+    var targetPath = './' + encodeURIComponent(screenId) + '.html';
+    var currentName = (window.location.pathname.split('/').pop() || '');
+    if (currentName === (encodeURIComponent(screenId) + '.html') ||
+        currentName === (screenId + '.html')) {
+      return;
+    }
+    var now = Date.now();
+    if (_aivicNavLastTarget === targetPath && (now - _aivicNavLastTime) < 100) {
+      console.warn('[aivic] showScreen 連続呼び出し検知。 無限ループ防止のため抑制:', screenId);
+      return;
+    }
+    if (!_aivicReady) {
+      console.warn('[aivic] DOMContentLoaded 前の showScreen 呼び出し。 抑制:', screenId);
+      return;
+    }
+    _aivicNavLastTime = now;
+    _aivicNavLastTarget = targetPath;
+    window.location.href = targetPath;
+  };
+
+  function seedAllIfEmpty() {
+    if (!API_URL) return Promise.resolve();
+    return Promise.all(TABLE_DEFS.map(function(t, i) {
+      var preset = PRESET_SEED[t.tableName];
+      if (!Array.isArray(preset) || preset.length === 0) return Promise.resolve();
+      return window.aivicApi.list(i).then(function(existing) {
+        if (existing && existing.length > 0) return;
+        return Promise.all(preset.map(function(row) { return window.aivicApi.save(i, row); }));
+      }).catch(function() {});
+    }));
+  }
+
+  // ── 初期表示: このページ専用の panel に initFn を実行 ──
+  document.addEventListener("DOMContentLoaded", function() {
+    setTimeout(function() { _aivicReady = true; }, 1500);
+    var pageScreenId = window.AIVIC_PAGE_SCREEN_ID;
+    if (!pageScreenId) return;
+
+    document.querySelectorAll('[data-aivic-nav]').forEach(function(btn) {
+      var isActive = btn.getAttribute("data-aivic-nav") === pageScreenId;
+      btn.classList.toggle("aivic-active", isActive);
+      btn.setAttribute("aria-current", isActive ? "page" : "false");
+    });
+
+    var container = document.querySelector('[data-aivic-panel="' + pageScreenId + '"]');
+    if (!container) return;
+
+    // content 要素の hidden 強制除去 ( 2026-05-24 Playwright 大量 fail 対応 )
+    var isModalLike = function(el) {
+      if (!el || !el.classList) return false;
+      var cn = String(el.className || "");
+      if (/\bmodal\b|\bdialog\b|\boverlay\b|\bpopup\b|\bdropdown\b|\btooltip\b/i.test(cn)) return true;
+      var role = el.getAttribute && el.getAttribute("role");
+      if (role === "dialog" || role === "alertdialog" || role === "tooltip" || role === "menu") return true;
+      if (el.hasAttribute && (el.hasAttribute("data-modal") || el.hasAttribute("data-dropdown") || el.hasAttribute("data-popup") || el.hasAttribute("data-aivic-overlay"))) return true;
+      // 【2026-06-25】 class/role が無くても inline で画面を覆う overlay ( position:fixed ) は modal 扱いにして、
+      //  content 強制可視化が誤ってダイアログをロード時に表示してしまわないようにする。
+      if (el.style && el.style.position === "fixed") return true;
+      return false;
+    };
+    var unhideContentElements = function(root) {
+      var all = root.querySelectorAll('.hidden, [hidden], [style*="display:none"], [style*="display: none"]');
+      for (var k = 0; k < all.length; k++) {
+        var el = all[k];
+        if (isModalLike(el)) continue;
+        var p = el.parentElement;
+        var insideModal = false;
+        while (p && p !== root) {
+          if (isModalLike(p)) { insideModal = true; break; }
+          p = p.parentElement;
+        }
+        if (insideModal) continue;
+        el.classList.remove('hidden');
+        el.removeAttribute('hidden');
+        if (el.style && el.style.display === 'none') el.style.display = '';
+      }
+    };
+    try { unhideContentElements(container); } catch (e) { console.warn('[aivic] unhideContent failed:', e); }
+
+    var initJsSource = window.AIVIC_PAGE_INIT_JS;
+    if (!initJsSource) {
+      seedAllIfEmpty();
+      return;
+    }
+    var initFn = null;
+    try {
+      initFn = (new Function("return (" + initJsSource + ")"))();
+    } catch (e) {
+      console.error("[aivic] initJs compile error:", pageScreenId, e);
+      return;
+    }
+    if (typeof initFn !== "function") return;
+
+    seedAllIfEmpty().then(function() {
+      return Promise.all(TABLE_DEFS.map(function(t, i) {
+        return window.aivicApi.list(i)
+          .then(function(records) { return Object.assign({}, t, { records: records }); })
+          .catch(function() { return Object.assign({}, t, { records: [] }); });
+      }));
+    }).then(function(tables) {
+      try { initFn(container, API_URL, tables); } catch (e) { console.error("[aivic] initFn error:", pageScreenId, e); }
+      _aivicReady = true;
+    });
+  });
+
+  // 【2026-06-27 強化・必ず閉じられる保証】 モーダル/ダイアログを確実に閉じる安全網。
+  //  旧版は Esc のみ + セレクタ .overlay が class="modal-overlay" にマッチせず ( クラストークンが別 )
+  //  閉じられなかった ( ユーザー報告 2026-06-27: ダイアログが閉じない ) 。 ① Esc ② オーバーレイ背景クリック
+  //  ③ 閉じる系ボタン の 3 経路で閉じる。 セレクタは複合クラスも拾うよう [class*="overlay"] を含む。
+  //  閉じ方は「開クラス ( active/open/show 等 ) があれば外す ( 再オープン可 ) 、 無ければ inline display:none」。
+  //  modal-header 等の sub-part を誤って隠さないため [class*="modal"] は使わない。
+  var AIVIC_OVERLAY_SELECTOR = '[class*="overlay"],[data-aivic-overlay],[data-modal],[role="dialog"],[role="alertdialog"]';
+  var aivicCloseOverlay = function(el) {
+    if (!el || !el.classList) return;
+    var openClasses = ["active", "open", "show", "visible", "is-open", "is-active", "show-modal"];
+    var removed = false;
+    for (var c = 0; c < openClasses.length; c++) {
+      if (el.classList.contains(openClasses[c])) { el.classList.remove(openClasses[c]); removed = true; }
+    }
+    if (!removed && el.style) el.style.display = "none";
+  };
+  document.addEventListener("keydown", function(e) {
+    if (e.key !== "Escape" && e.keyCode !== 27) return;
+    var ov = document.querySelectorAll(AIVIC_OVERLAY_SELECTOR);
+    for (var i = 0; i < ov.length; i++) aivicCloseOverlay(ov[i]);
+  });
+  document.addEventListener("click", function(e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.closest) {
+      var closer = t.closest('.modal-close,[data-modal-close],[data-close],[data-dismiss]');
+      if (closer) {
+        var oc = closer.closest(AIVIC_OVERLAY_SELECTOR);
+        if (oc) { aivicCloseOverlay(oc); return; }
+      }
+    }
+    // 背景 ( オーバーレイ要素そのもの ) を直接クリックした時のみ閉じる ( モーダル本体クリックでは閉じない ) 。
+    if (t.matches && t.matches(AIVIC_OVERLAY_SELECTOR) && t === e.target) {
+      aivicCloseOverlay(t);
+    }
+  });
+  // 【2026-06-28 強化・ロード時に必ず閉じる】 生成 AI が overlay を初期 display:none にし忘れた場合でも、
+  //  ロード直後にダイアログが画面を覆って操作不能になる事故 ( ユーザー報告 2026-06-28: ダイアログが常に表示され
+  //  閉じられない ) を防ぐ。 認識可能な overlay/dialog セレクタに該当する要素はロード時に必ず閉じる
+  //  ( 開クラス除去 or display:none ) 。 真にロード時表示すべき業務コンテンツは overlay セレクタに該当しないため
+  //  影響しない ( パネルコンテナは data-aivic-panel で別管理 ) 。
+  var aivicHideOverlaysOnLoad = function() {
+    var ov = document.querySelectorAll(AIVIC_OVERLAY_SELECTOR);
+    for (var i = 0; i < ov.length; i++) aivicCloseOverlay(ov[i]);
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", aivicHideOverlaysOnLoad);
+  } else {
+    aivicHideOverlaysOnLoad();
+  }
+})();
+
+</script>
+</body>
+</html>
