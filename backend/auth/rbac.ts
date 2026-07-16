@@ -2,52 +2,43 @@ import { APIGatewayProxyEvent } from 'aws-lambda';
 
 export type Role = 'admin' | 'operator' | 'viewer';
 
-export interface RBACContext {
-  role: Role;
+export interface AuthContext {
   userId: string;
-  timestamp: string;
+  role: Role;
+  timestamp: number;
 }
 
-export function extractRBACContext(event: APIGatewayProxyEvent): RBACContext {
+export const extractAuthContext = (event: APIGatewayProxyEvent): AuthContext => {
   const authHeader = event.headers['Authorization'] || '';
-  const role = (event.headers['X-Role'] || 'viewer') as Role;
-  const userId = event.headers['X-User-Id'] || 'anonymous';
-  const timestamp = new Date().toISOString();
+  const roleHeader = event.headers['X-User-Role'] || 'viewer';
+  const userIdHeader = event.headers['X-User-Id'] || 'unknown';
 
+  if (!authHeader.startsWith('Bearer ')) {
+    throw new Error('Missing or invalid Authorization header');
+  }
+
+  const role = roleHeader as Role;
   if (!['admin', 'operator', 'viewer'].includes(role)) {
     throw new Error('Invalid role');
   }
 
-  return { role, userId, timestamp };
-}
+  return {
+    userId: userIdHeader,
+    role,
+    timestamp: Date.now(),
+  };
+};
 
-export function checkPermission(role: Role, requiredRoles: Role[]): boolean {
+export const checkPermission = (role: Role, requiredRoles: Role[]): boolean => {
   return requiredRoles.includes(role);
-}
+};
 
-export function requirePermission(role: Role, requiredRoles: Role[]): void {
-  if (!checkPermission(role, requiredRoles)) {
-    throw new ForbiddenError(`Role '${role}' is not permitted for this operation`);
-  }
-}
+export const roleHierarchy: Record<Role, number> = {
+  admin: 3,
+  operator: 2,
+  viewer: 1,
+};
 
-export class ForbiddenError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ForbiddenError';
-  }
-}
-
-export class NotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'NotFoundError';
-  }
-}
-
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ValidationError';
-  }
-}
+export const hasMinimumRole = (role: Role, minimumRole: Role): boolean => {
+  return roleHierarchy[role] >= roleHierarchy[minimumRole];
+};
