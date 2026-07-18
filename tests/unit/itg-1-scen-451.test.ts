@@ -59,7 +59,7 @@ describe("食事評価入力期限管理機能", () => {
 
     // 期限内に提出された評価の数
     const evaluationsSubmittedBeforeDeadline = evaluationsWithinDeadline.filter(
-      (evaluationValue) => evaluationValue.submittedAt < evaluationDeadlineDate
+      (eval) => eval.submittedAt < evaluationDeadlineDate
     ).length;
 
     // 未入力の食事（期限内に評価が提出されなかった食事）
