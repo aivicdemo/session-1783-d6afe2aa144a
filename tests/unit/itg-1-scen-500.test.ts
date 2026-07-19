@@ -26,7 +26,7 @@ describe("家族成員の食事評価データの蓄積・管理機能", () => {
         food_name: "野菜セット",
         quantity: 1,
         unit: "box",
-        purchase_date: "2024-01-15",
+        ...{ purchase_date: "2024-01-15" },
         purchase_date: "2024-01-15",
         amount: undefined,
       },
