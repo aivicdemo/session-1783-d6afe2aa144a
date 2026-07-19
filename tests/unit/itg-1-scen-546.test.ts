@@ -9,7 +9,7 @@ describe('食事評価データを献立生成ロジックに反映させる機�
     const processingDelayMs = 35000; // SLA超過: 35秒
 
     const request = {
-      userId,
+      ...{ userId },
       familyMemberId,
       constraints: {
         nutritionTargets: [
