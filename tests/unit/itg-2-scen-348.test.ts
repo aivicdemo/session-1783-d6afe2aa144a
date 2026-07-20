@@ -49,8 +49,8 @@ describe("月次食費超過要因分析と次月献立優先条件の自動調�
       {
         itemId: "item_004",
         itemName: "卵",
-        plannedQuantity: 30,
-        actualQuantity: 35,
+        ...{ plannedQuantity: 30 },
+        ...{ actualQuantity: 35 },
         plannedQuantity: 30,
         actualQuantity: 35,
         standardPrice: 30,
