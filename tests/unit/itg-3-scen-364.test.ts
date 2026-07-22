@@ -214,7 +214,7 @@ describe('献立却下・修正理由のテキスト自動分類機能', () => {
     ).toThrow(/ユーザーID/);
 
     expect(() =>
-      classifyRejectReasonTest({
+      classifyRejectReasonText({
         text: '理由',
         user_id: 'user_20240115_008',
         meal_plan_id: '',
