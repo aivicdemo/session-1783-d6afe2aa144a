@@ -98,10 +98,10 @@ describe('Purchase Record and Monthly Food Cost Reduction Analysis', () => {
     const fat_ratio = (total_fat_g / total_calories) * 9 * 100;
 
     const nutrition_score =
-      protein_ratio >= 15 && protein_ratio <= 20 ? 100 : 0 +
-      carbs_ratio >= 45 && carbs_ratio <= 55 ? 100 : 0 +
-      fat_ratio >= 20 && fat_ratio <= 30 ? 100 : 0 +
-      total_fiber_g >= 5 ? 100 : 0;
+      (protein_ratio >= 15 && protein_ratio <= 20 ? 100 : 0) +
+      (carbs_ratio >= 45 && carbs_ratio <= 55 ? 100 : 0) +
+      (fat_ratio >= 20 && fat_ratio <= 30 ? 100 : 0) +
+      (total_fiber_g >= 5 ? 100 : 0);
     const nutrition_compliance = nutrition_score === 400 ? 100 : 0;
 
     // Constraint 2: Cost Efficiency (25%)
