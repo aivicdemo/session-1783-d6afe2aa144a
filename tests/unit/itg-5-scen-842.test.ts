@@ -133,10 +133,10 @@ describe('献立生成アルゴリズムの週次改善効果集計', () => {
     expect(leadTimeMs).toBeGreaterThanOrEqual(oneDay);
 
     // 検証9: 全ての準備項目の整備タイムスタンプが協議会開催前日内であることを確認
-    expect(result.agendaGeneratedAt).toBeLessThanOrEqual('2024-01-14T23:59:59Z');
-    expect(result.materialsGeneratedAt).toBeLessThanOrEqual('2024-01-14T23:59:59Z');
-    expect(result.participantsListGeneratedAt).toBeLessThanOrEqual('2024-01-14T23:59:59Z');
-    expect(result.arrangementMapGeneratedAt).toBeLessThanOrEqual('2024-01-14T23:59:59Z');
+    expect(new Date(result.agendaGeneratedAt).getTime()).toBeLessThanOrEqual(new Date('2024-01-14T23:59:59Z').getTime());
+    expect(new Date(result.materialsGeneratedAt).getTime()).toBeLessThanOrEqual(new Date('2024-01-14T23:59:59Z').getTime());
+    expect(new Date(result.participantsListGeneratedAt).getTime()).toBeLessThanOrEqual(new Date('2024-01-14T23:59:59Z').getTime());
+    expect(new Date(result.arrangementMapGeneratedAt).getTime()).toBeLessThanOrEqual(new Date('2024-01-14T23:59:59Z').getTime());
 
     // 検証10: 当日ダッシュボード表示用のメタデータが正しく生成されているか
     expect(result.dashboardMetadata).toEqual({

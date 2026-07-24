@@ -142,7 +142,7 @@ describe("献立生成アルゴリズム改善提案の技術実現性評価", (
       evaluated_by: "TECH-LEAD-001",
     });
 
-    const proposalIdMap = new Map(result.map((r) => [r.proposal_id, r]));
+    const proposalIdMap = new Map<any, any>(result.map((r) => [r.proposal_id, r]));
     expect(proposalIdMap.get("PROP-001")?.feasibility_score).toBe(62);
     expect(proposalIdMap.get("PROP-002")?.feasibility_score).toBe(75);
     expect(proposalIdMap.get("PROP-003")?.feasibility_score).toBe(62);
@@ -170,7 +170,7 @@ describe("献立生成アルゴリズム改善提案の技術実現性評価", (
     });
 
     const feasibility_scores = result.map((r) => r.feasibility_score);
-    const unique_scores = new Set(feasibility_scores);
+    const unique_scores = new Set<any>(feasibility_scores);
     expect(unique_scores.size).toBeGreaterThan(1);
 
     const feasibility_classifications = result.map(
