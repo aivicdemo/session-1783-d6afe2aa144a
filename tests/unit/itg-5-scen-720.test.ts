@@ -54,7 +54,7 @@ describe('改善提案書生成機能 - KPI寄与度計算混在ケース', () =
         generatedAt: expect.any(String),
         totalTasks: 5,
         processedTasks: 3,
-        failedTasks: 2,
+        ...{ failedTasks: 2 },
         successfulTasks: expect.arrayContaining([
           expect.objectContaining({
             taskId: 'TASK-001',
