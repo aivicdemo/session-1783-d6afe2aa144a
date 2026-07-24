@@ -19,18 +19,18 @@ describe('献立却下・修正理由の自動カテゴリ分類機能', () => {
     expect(Object.keys(firstResult.confidenceScores).length).toBeGreaterThanOrEqual(2);
 
     // 各確度スコアが 0.0 ～ 1.0 の範囲内であることを検証
-    Object.values(firstResult.confidenceScores).forEach((score) => {
+    Object.values<any>(firstResult.confidenceScores).forEach((score) => {
       expect(typeof score).toBe('number');
       expect(score).toBeGreaterThanOrEqual(0.0);
       expect(score).toBeLessThanOrEqual(1.0);
     });
 
     // 選択されたカテゴリの確度スコアが最高値であることを検証
-    const maxConfidenceScore = Math.max(...Object.values(firstResult.confidenceScores));
+    const maxConfidenceScore = Math.max(...Object.values<any>(firstResult.confidenceScores));
     expect(firstResult.selectedConfidenceScore).toBe(maxConfidenceScore);
 
     // 選択されたカテゴリが確度スコア最高値を持つカテゴリであることを検証
-    const categoryWithMaxScore = Object.entries(firstResult.confidenceScores).find(
+    const categoryWithMaxScore = Object.entries<any>(firstResult.confidenceScores).find(
       ([, score]) => score === maxConfidenceScore,
     )?.[0];
     expect(firstResult.selectedCategory).toBe(categoryWithMaxScore);
@@ -48,8 +48,8 @@ describe('献立却下・修正理由の自動カテゴリ分類機能', () => {
     expect(thirdResult.selectedConfidenceScore).toBe(firstResult.selectedConfidenceScore);
 
     // 全実行で選択されたカテゴリが確度スコア最高値であることを再検証
-    const secondMaxScore = Math.max(...Object.values(secondResult.confidenceScores));
-    const thirdMaxScore = Math.max(...Object.values(thirdResult.confidenceScores));
+    const secondMaxScore = Math.max(...Object.values<any>(secondResult.confidenceScores));
+    const thirdMaxScore = Math.max(...Object.values<any>(thirdResult.confidenceScores));
 
     expect(secondResult.selectedConfidenceScore).toBe(secondMaxScore);
     expect(thirdResult.selectedConfidenceScore).toBe(thirdMaxScore);

@@ -148,7 +148,7 @@ describe('献立却下・修正理由の自動カテゴリ分類と失敗パタ�
 
     // 追加検証: 週別カテゴリ分布の合計が週別総件数と一致するか確認
     result.weeklyTrends.forEach((weekTrend) => {
-      const categorySum = Object.values(weekTrend.categoryDistribution).reduce(
+      const categorySum = Object.values<any>(weekTrend.categoryDistribution).reduce(
         (sum, count) => sum + count,
         0,
       );

@@ -55,7 +55,7 @@ describe('献立却下・修正理由の自動カテゴリ分類と失敗パタ�
     expect(result.timestamp).toEqual(new Date('2024-01-15T11:00:00Z'));
 
     // Assert: 集計結果の総件数が正しく計算されていること（既存28件 + 新規1件 = 29件）
-    const totalCount = Object.values(result.updatedAggregation).reduce((sum, count) => sum + count, 0);
+    const totalCount = Object.values<any>(result.updatedAggregation).reduce((sum, count) => sum + count, 0);
     expect(totalCount).toBe(29);
   });
 });

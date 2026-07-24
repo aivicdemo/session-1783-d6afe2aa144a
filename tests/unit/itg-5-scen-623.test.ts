@@ -158,7 +158,7 @@ describe('献立却下・修正理由の分類と失敗パターン特定', () =
     });
 
     // 5. 各カテゴリの件数合計が全体件数と一致することを確認
-    const totalCategorizedCount = Object.values(classificationResult.aggregationByCategory).reduce(
+    const totalCategorizedCount = Object.values<any>(classificationResult.aggregationByCategory).reduce(
       (sum, count) => sum + count,
       0
     );

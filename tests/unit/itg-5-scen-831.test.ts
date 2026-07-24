@@ -110,7 +110,7 @@ describe('献立却下・修正理由の自動カテゴリ分類と失敗パタ�
       createdAt: new Date('2024-01-21T08:15:00Z'),
     });
 
-    const topFailurePattern = Object.entries(result.categorySummary).reduce(
+    const topFailurePattern = Object.entries<any>(result.categorySummary).reduce(
       (prev, [category, count]) => (count > prev.count ? { category, count } : prev),
       { category: '', count: 0 }
     );

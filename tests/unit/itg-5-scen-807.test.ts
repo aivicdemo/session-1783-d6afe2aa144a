@@ -198,7 +198,7 @@ describe('献立却下・修正理由の自動カテゴリ分類機能', () => {
     expect(aggregation['OTHER_001'].category).toBe('other');
 
     // 総集計数が入力数と一致することを確認
-    const total_classified = Object.values(aggregation).reduce(
+    const total_classified = Object.values<any>(aggregation).reduce(
       (sum, item) => sum + item.count,
       0
     );
