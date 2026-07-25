@@ -39,14 +39,14 @@ export interface MealPlan {
 }
 export interface MealConstraints {
     nutrition: {
-        protein?: {
-            min?: number;
+        protein: {
+            min: number;
         };
-        carbohydrates?: {
-            min?: number;
+        carbohydrates: {
+            min: number;
         };
-        fat?: {
-            max?: number;
+        fat: {
+            max: number;
         };
     };
     allergyExclusions: string[];
@@ -59,7 +59,7 @@ export interface MenuEvaluationScores {
     allergenScore: number;
     cookingTimeScore: number;
 }
-export interface ComplianceConstraints {
+export interface MenuComplianceConstraints {
     allergyExclusions: string[];
     nutritionTargets: {
         proteinMin: number;
@@ -91,14 +91,20 @@ export interface ConstraintSatisfactionInput {
     budget_jpy: number;
     cooking_time_minutes: number;
 }
-export interface ClassificationResult {
-    category: string;
-    confidenceScore: number;
-    isClassified: boolean;
+export interface RejectReasonInput {
     reasonText: string;
     userId: string;
     mealId: string;
     timestamp: string;
+}
+export interface RejectReasonAggregationInput {
+    reject_reasons_list: Array<{
+        reason_text: string;
+        menu_id: string;
+        rejected_at: string;
+    }>;
+    analysis_start_date: string;
+    analysis_end_date: string;
 }
 export interface MealRatingInput {
     mealId: string;
@@ -109,29 +115,15 @@ export interface MealRatingInput {
     timestamp: Date;
 }
 export interface MealEvaluationInput {
-    dish_name?: string;
-    dishName?: string;
-    satisfaction_score?: number;
-    satisfactionScore?: number;
-    completion_rate?: number;
-    completionRate?: number;
-    comment?: string;
-    tasteRating?: number;
-    nutritionRating?: number;
-    userRequest?: string;
-    menuName?: string;
-    mealDateTime?: Date;
+    dish_name: string;
+    satisfaction_score: number | null;
+    completion_rate: number | null;
+    comment: string;
 }
 export interface SatisfactionScoreResult {
-    is_valid: boolean;
-    normalizedScore?: number;
-    errorMessage?: string;
-    error_message?: string;
-    input_value?: number;
-    field_status?: string;
-    should_block_submission?: boolean;
-    score?: number;
-    isValid?: boolean;
+    isValid: boolean;
+    normalizedScore: number | null;
+    errorMessage: string | null;
 }
 export interface MealSatisfactionInput {
     satisfaction_score: number;
@@ -139,14 +131,31 @@ export interface MealSatisfactionInput {
     meal_id: string;
     timestamp: string;
 }
-export interface MealEvaluationDeadlineInput {
-    mealPlanId: string;
-    familyMemberId: string;
-    satisfactionScore: number;
-    completionRate: number;
-    requestComment: string;
-    submissionTimestamp: Date;
-    deadline: Date;
+export interface MealSatisfactionValidationResult {
+    is_valid: boolean;
+    satisfaction_score: number;
+    family_member_id: string;
+    meal_id: string;
+    timestamp: string;
+    error_message: string | null;
+}
+export interface EvaluationDeadlineInput {
+    mealId: string;
+    currentDate: string;
+    deadline: string;
+    familyMembers: Array<{
+        id: string;
+        name: string;
+        ageGroup: string;
+    }>;
+    submittedEvaluations: Array<{
+        memberId: string;
+        mealId: string;
+        satisfactionScore: number;
+        completionDegree: number;
+        requestText: string;
+        inputTimestamp: string;
+    }>;
 }
 export interface InterviewRecord {
     id: string;
@@ -164,12 +173,32 @@ export interface ValidationError {
     message: string;
 }
 export interface EvaluationDeadlineConfig {
-    mealExecutionCompletedAt: Date;
-    feedbackDeadlineHours: number;
-    familyMemberFeedbackSubmittedAt: Date | null;
-    currentDateTime: Date;
+    mealId: string;
+    deadlineDate: string;
+    createdAt: string;
+}
+export interface FamilyMember {
+    id: string;
+    name: string;
+    ageGroup: string;
+}
+export interface EvaluationRecord {
+    memberId: string;
+    mealId: string;
+    satisfactionScore: number;
+    completionDegree: number;
+    requestText: string;
+    inputTimestamp: string;
+}
+export interface ClassifiedCategory {
+    categoryId: string;
+    categoryName: string;
+    matchConfidenceScore: number;
+    isSelected: boolean;
 }
 
+
+import { randomUUID } from "crypto";
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=calculateConstraintComplianceScores exports=calculateConstraintComplianceScores */
 const __aivicBundle_1_calculateConstraintComplianceScores = (() => {
@@ -184,68 +213,72 @@ const __aivicBundle_1_calculateConstraintComplianceScores = (() => {
     overall_evaluation_score: number;
     calculation_log: string;
   } {
-    const totalCalories = mealProposal.total_calories;
-    const totalSodium = mealProposal.total_sodium_g;
-    const totalProtein = mealProposal.total_protein_g;
-    const calorieLimit = constraintConditions.calorie_limit;
-    const sodiumLimit = constraintConditions.sodium_limit_g;
-    const proteinMinimum = constraintConditions.protein_minimum_g;
-    const allergenExclusions = constraintConditions.allergen_exclusions;
+    if (mealProposal["menu_id"] === undefined || mealProposal["menu_id"] === null) { throw new Error("menu_id is required"); }
+    const logs: string[] = [];
   
-    // カロリー充足度スコア: (実績 / 上限) * 100
-    const calorieComplianceScore = (totalCalories / calorieLimit) * 100;
+    // カロリー充足度スコア計算
+    const calorie_compliance_score = Math.min(
+      (mealProposal.total_calories / constraintConditions.calorie_limit) * 100,
+      100
+    );
+    logs.push(
+      `Calorie: ${mealProposal.total_calories}/${constraintConditions.calorie_limit}*100=${calorie_compliance_score}`
+    );
   
-    // 塩分充足度スコア: (実績 / 上限) * 100
-    const sodiumComplianceScore = (totalSodium / sodiumLimit) * 100;
+    // 塩分充足度スコア計算
+    const sodium_compliance_score = Math.min(
+      (mealProposal.total_sodium_g / constraintConditions.sodium_limit_g) * 100,
+      100
+    );
+    logs.push(
+      `Sodium: ${mealProposal.total_sodium_g}/${constraintConditions.sodium_limit_g}*100=${sodium_compliance_score}`
+    );
   
-    // タンパク質充足度スコア: (実績 / 最小値) * 100、上限100に正規化
-    let proteinComplianceScore = (totalProtein / proteinMinimum) * 100;
-    if (proteinComplianceScore > 100) {
-      proteinComplianceScore = 100;
-    }
+    // タンパク質充足度スコア計算
+    const protein_compliance_score = Math.min(
+      (mealProposal.total_protein_g / constraintConditions.protein_minimum_g) *
+        100,
+      100
+    );
+    logs.push(
+      `Protein: ${mealProposal.total_protein_g}/${constraintConditions.protein_minimum_g}*100=${protein_compliance_score}`
+    );
   
-    // アレルギー制約充足度スコア: 除外対象アレルゲンが含まれていなければ100、含まれていれば0
-    let allergenComplianceScore = 100;
-    for (const dish of mealProposal.dishes) {
-      for (const allergen of dish.allergens) {
-        if (allergenExclusions.includes(allergen)) {
-          allergenComplianceScore = 0;
-          break;
-        }
-      }
-      if (allergenComplianceScore === 0) {
-        break;
-      }
-    }
-  
-    // 各スコアを0～100の範囲に正規化
-    const normalizedCalorieScore = Math.max(0, Math.min(100, calorieComplianceScore));
-    const normalizedSodiumScore = Math.max(0, Math.min(100, sodiumComplianceScore));
-    const normalizedProteinScore = Math.max(0, Math.min(100, proteinComplianceScore));
-    const normalizedAllergenScore = Math.max(0, Math.min(100, allergenComplianceScore));
+    // アレルギー制約充足度スコア計算
+    const allergen_exclusions = constraintConditions.allergen_exclusions || [];
+    const hasExcludedAllergen = mealProposal.dishes.some((dish) =>
+      dish.allergens.some((allergen) =>
+        allergen_exclusions.includes(allergen)
+      )
+    );
+    const allergen_compliance_score = hasExcludedAllergen ? 0 : 100;
+    logs.push(
+      `Allergen: excluded=${allergen_exclusions.join(
+        ","
+      )}, has_excluded=${hasExcludedAllergen}, score=${allergen_compliance_score}`
+    );
   
     // 総合評価スコア（加重平均、各25%）
-    const overallEvaluationScore =
-      (normalizedCalorieScore * 0.25 +
-        normalizedSodiumScore * 0.25 +
-        normalizedProteinScore * 0.25 +
-        normalizedAllergenScore * 0.25);
+    const overall_evaluation_score =
+      (calorie_compliance_score * 0.25 +
+        sodium_compliance_score * 0.25 +
+        protein_compliance_score * 0.25 +
+        allergen_compliance_score * 0.25) /
+      1;
   
-    // 計算ログを生成
-    const calculationLog =
-      `Calorie: ${totalCalories}/${calorieLimit}*100=${normalizedCalorieScore}; ` +
-      `Sodium: ${totalSodium}/${sodiumLimit}*100=${normalizedSodiumScore}; ` +
-      `Protein: ${totalProtein}/${proteinMinimum}*100=${normalizedProteinScore}; ` +
-      `Allergen: ${normalizedAllergenScore}; ` +
-      `Overall: (${normalizedCalorieScore}*0.25+${normalizedSodiumScore}*0.25+${normalizedProteinScore}*0.25+${normalizedAllergenScore}*0.25)=${overallEvaluationScore}`;
+    logs.push(
+      `Overall: (${calorie_compliance_score}*0.25 + ${sodium_compliance_score}*0.25 + ${protein_compliance_score}*0.25 + ${allergen_compliance_score}*0.25) = ${overall_evaluation_score}`
+    );
+  
+    const calculation_log = logs.join(" | ");
   
     return {
-      calorie_compliance_score: normalizedCalorieScore,
-      sodium_compliance_score: normalizedSodiumScore,
-      protein_compliance_score: normalizedProteinScore,
-      allergen_compliance_score: normalizedAllergenScore,
-      overall_evaluation_score: overallEvaluationScore,
-      calculation_log: calculationLog,
+      calorie_compliance_score,
+      sodium_compliance_score,
+      protein_compliance_score,
+      allergen_compliance_score,
+      overall_evaluation_score,
+      calculation_log,
     };
   }
   return { calculateConstraintComplianceScores };
@@ -274,17 +307,42 @@ const __aivicBundle_2_evaluateMealPlanConstraintSatisfaction = (() => {
       throw new Error('制約条件が指定されていません');
     }
   
-    if (constraints.nutrition === null || constraints.nutrition === undefined) {
+    if (
+      constraints.nutrition === null ||
+      constraints.nutrition === undefined
+    ) {
       throw new Error('制約条件の栄養情報が指定されていません');
     }
   
-    const nutritionScore = calculateNutritionScore(mealPlan.nutrition, constraints.nutrition);
-    const allergyScore = calculateAllergyScore(mealPlan.ingredients, constraints.allergyExclusions || []);
-    const budgetScore = calculateBudgetScore(mealPlan.estimatedCost, constraints.budgetLimit);
-    const cookingTimeScore = calculateCookingTimeScore(mealPlan.estimatedCookingTimeMinutes, constraints.cookingTimeLimit);
+    const nutritionScore = calculateNutritionScore(
+      mealPlan.nutrition,
+      constraints.nutrition
+    );
   
-    const allScoresMax = nutritionScore === 100 && allergyScore === 100 && budgetScore === 100 && cookingTimeScore === 100;
-    const overallScore = allScoresMax ? 100 : Math.min(nutritionScore, allergyScore, budgetScore, cookingTimeScore);
+    const allergyScore = calculateAllergyScore(
+      mealPlan.ingredients,
+      constraints.allergyExclusions || []
+    );
+  
+    const budgetScore = calculateBudgetScore(
+      mealPlan.estimatedCost,
+      constraints.budgetLimit
+    );
+  
+    const cookingTimeScore = calculateCookingTimeScore(
+      mealPlan.estimatedCookingTimeMinutes,
+      constraints.cookingTimeLimit
+    );
+  
+    const overallScore = Math.round(
+      (nutritionScore + allergyScore + budgetScore + cookingTimeScore) / 4
+    );
+  
+    const satisfiesAllConstraints =
+      nutritionScore === 100 &&
+      allergyScore === 100 &&
+      budgetScore === 100 &&
+      cookingTimeScore === 100;
   
     return {
       overallScore,
@@ -292,41 +350,48 @@ const __aivicBundle_2_evaluateMealPlanConstraintSatisfaction = (() => {
       allergyScore,
       budgetScore,
       cookingTimeScore,
-      satisfiesAllConstraints: allScoresMax
+      satisfiesAllConstraints
     };
   }
   
-  function calculateNutritionScore(nutrition: { protein: number; carbohydrates: number; fat: number }, constraints: any): number {
-    if (!constraints) {
-      return 100;
+  function calculateNutritionScore(
+    nutrition: { protein: number; carbohydrates: number; fat: number },
+    constraints: {
+      protein?: { min: number };
+      carbohydrates?: { min: number };
+      fat?: { max: number };
     }
-  
+  ): number {
     let score = 100;
   
     if (constraints.protein?.min !== undefined) {
       if (nutrition.protein < constraints.protein.min) {
-        score = Math.max(0, (nutrition.protein / constraints.protein.min) * 100);
+        const deficit = constraints.protein.min - nutrition.protein;
+        score -= Math.min(50, deficit * 2);
       }
     }
   
     if (constraints.carbohydrates?.min !== undefined) {
       if (nutrition.carbohydrates < constraints.carbohydrates.min) {
-        score = Math.min(score, Math.max(0, (nutrition.carbohydrates / constraints.carbohydrates.min) * 100));
+        const deficit = constraints.carbohydrates.min - nutrition.carbohydrates;
+        score -= Math.min(30, deficit * 1.5);
       }
     }
   
     if (constraints.fat?.max !== undefined) {
       if (nutrition.fat > constraints.fat.max) {
         const excess = nutrition.fat - constraints.fat.max;
-        const penaltyPercent = (excess / constraints.fat.max) * 100;
-        score = Math.min(score, Math.max(0, 100 - penaltyPercent));
+        score -= Math.min(40, excess * 3);
       }
     }
   
-    return Math.round(score);
+    return Math.max(0, score);
   }
   
-  function calculateAllergyScore(ingredients: Array<{ name: string; allergens: string[] }>, allergyExclusions: string[]): number {
+  function calculateAllergyScore(
+    ingredients: Array<{ name: string; allergens: string[] }>,
+    allergyExclusions: string[]
+  ): number {
     if (!allergyExclusions || allergyExclusions.length === 0) {
       return 100;
     }
@@ -342,24 +407,34 @@ const __aivicBundle_2_evaluateMealPlanConstraintSatisfaction = (() => {
     return 100;
   }
   
-  function calculateBudgetScore(estimatedCost: number, budgetLimit: number): number {
+  function calculateBudgetScore(
+    estimatedCost: number,
+    budgetLimit: number
+  ): number {
     if (estimatedCost <= budgetLimit) {
       return 100;
     }
   
     const excess = estimatedCost - budgetLimit;
-    const penaltyPercent = (excess / budgetLimit) * 100;
-    return Math.max(0, 100 - penaltyPercent);
+    const exceedPercentage = (excess / budgetLimit) * 100;
+    const score = 100 - exceedPercentage;
+  
+    return Math.max(0, score);
   }
   
-  function calculateCookingTimeScore(estimatedCookingTimeMinutes: number, cookingTimeLimit: number): number {
+  function calculateCookingTimeScore(
+    estimatedCookingTimeMinutes: number,
+    cookingTimeLimit: number
+  ): number {
     if (estimatedCookingTimeMinutes <= cookingTimeLimit) {
       return 100;
     }
   
     const excess = estimatedCookingTimeMinutes - cookingTimeLimit;
-    const penaltyPercent = (excess / cookingTimeLimit) * 100;
-    return Math.max(0, 100 - penaltyPercent);
+    const exceedPercentage = (excess / cookingTimeLimit) * 100;
+    const score = 100 - exceedPercentage;
+  
+    return Math.max(0, score);
   }
   return { evaluateMealPlanConstraintSatisfaction };
 })();
@@ -370,7 +445,10 @@ export const evaluateMealPlanConstraintSatisfaction: (...args: any[]) => any = (
 const __aivicBundle_3_calculateMenuEvaluationScore = (() => {
   function calculateMenuEvaluationScore(scores: MenuEvaluationScores): number {
     const { calorieScore, sodiumScore, allergenScore, cookingTimeScore } = scores;
-    const average = (calorieScore + sodiumScore + allergenScore + cookingTimeScore) / 4;
+    
+    const sum = calorieScore + sodiumScore + allergenScore + cookingTimeScore;
+    const average = sum / 4;
+    
     return average;
   }
   return { calculateMenuEvaluationScore };
@@ -381,7 +459,7 @@ export const calculateMenuEvaluationScore = __aivicBundle_3_calculateMenuEvaluat
 /* AIVIC_FUNCTION_BUNDLE_START owner=validateMenuComplianceScore exports=validateMenuComplianceScore */
 const __aivicBundle_4_validateMenuComplianceScore = (() => {
   function validateMenuComplianceScore(
-    constraints: ComplianceConstraints,
+    constraints: MenuComplianceConstraints,
     menuProposal: MenuProposalCompliance
   ): {
     totalComplianceScore: number;
@@ -391,12 +469,17 @@ const __aivicBundle_4_validateMenuComplianceScore = (() => {
     costViolation: boolean;
     isCompliant: boolean;
   } {
-    // アレルギー違反判定
-    const allergyViolation = menuProposal.ingredientList.some((ingredient) =>
-      constraints.allergyExclusions.includes(ingredient)
+    if (menuProposal["dishName"] === undefined || menuProposal["dishName"] === null) { throw new Error("dishName is required"); }
+    // アレルギー制約の違反判定
+    const allergyViolation = constraints.allergyExclusions.some((allergen) =>
+      menuProposal.ingredientList.some(
+        (ingredient) =>
+          ingredient.toLowerCase().includes(allergen.toLowerCase()) ||
+          allergen.toLowerCase().includes(ingredient.toLowerCase())
+      )
     );
   
-    // 栄養違反判定
+    // 栄養制約の違反判定
     const nutritionViolation =
       menuProposal.nutritionFacts.protein <
         constraints.nutritionTargets.proteinMin ||
@@ -405,23 +488,23 @@ const __aivicBundle_4_validateMenuComplianceScore = (() => {
       menuProposal.nutritionFacts.sodium >
         constraints.nutritionTargets.sodiumMax;
   
-    // 調理時間違反判定
+    // 調理時間制約の違反判定
     const cookingTimeViolation =
       menuProposal.estimatedCookingTimeMinutes >
       constraints.cookingTimeMaxMinutes;
   
-    // コスト違反判定
+    // コスト制約の違反判定
     const costViolation =
       menuProposal.estimatedCostYen > constraints.ingredientCostMaxYen;
   
-    // 総合判定
+    // すべての制約を満たしているかの判定
     const isCompliant =
       !allergyViolation &&
       !nutritionViolation &&
       !cookingTimeViolation &&
       !costViolation;
   
-    // 総合スコア（すべての制約を満たす場合は100、1つでも違反があれば0）
+    // 総合スコア：すべての制約を満たす場合は100、1つ以上違反する場合は0
     const totalComplianceScore = isCompliant ? 100 : 0;
   
     return {
@@ -441,145 +524,173 @@ export const validateMenuComplianceScore = __aivicBundle_4_validateMenuComplianc
 /* AIVIC_FUNCTION_BUNDLE_START owner=calculateConstraintSatisfactionScore exports=calculateConstraintSatisfactionScore */
 const __aivicBundle_5_calculateConstraintSatisfactionScore = (() => {
   function calculateConstraintSatisfactionScore(
-    constraints: ConstraintSatisfactionInput
-  ): { success: boolean; total_score: number; constraint_scores?: object } {
+    constraints: any
+  ): {
+    success: boolean;
+    total_score: number;
+    constraint_scores: {
+      nutrition_score: number;
+      allergy_score: number;
+      budget_score: number;
+      cooking_time_score: number;
+    };
+  } {
     // Input validation
-    if (constraints === null || constraints === undefined) {
-      throw new Error("Constraints input is required");
-    }
-  
-    if (typeof constraints !== "object" || Array.isArray(constraints)) {
-      throw new Error("Constraints must be a valid object");
-    }
-  
-    // Validate nutrition object exists and has required fields
-    if (!constraints.nutrition || typeof constraints.nutrition !== "object") {
-      throw new Error("Nutrition data is required and must be an object");
-    }
-  
-    const nutrition = constraints.nutrition as any;
-  
-    // Check for required nutrition fields
     if (
-      nutrition.protein_g === undefined ||
-      nutrition.carbs_g === undefined ||
-      nutrition.fat_g === undefined ||
-      nutrition.fiber_g === undefined
+      constraints === null ||
+      constraints === undefined ||
+      typeof constraints !== "object"
     ) {
-      throw new Error("All nutrition fields (protein_g, carbs_g, fat_g, fiber_g) are required");
+      return {
+        success: false,
+        total_score: 0,
+        constraint_scores: {
+          nutrition_score: 0,
+          allergy_score: 0,
+          budget_score: 0,
+          cooking_time_score: 0,
+        },
+      };
     }
   
-    // Validate nutrition values are numbers
+    // Validate structure
+    if (
+      !constraints.nutrition ||
+      typeof constraints.nutrition !== "object" ||
+      !Array.isArray(constraints.allergy) ||
+      typeof constraints.budget_jpy !== "number" ||
+      typeof constraints.cooking_time_minutes !== "number"
+    ) {
+      return {
+        success: false,
+        total_score: 0,
+        constraint_scores: {
+          nutrition_score: 0,
+          allergy_score: 0,
+          budget_score: 0,
+          cooking_time_score: 0,
+        },
+      };
+    }
+  
+    const nutrition = constraints.nutrition;
+  
+    // Validate nutrition fields
     if (
       typeof nutrition.protein_g !== "number" ||
       typeof nutrition.carbs_g !== "number" ||
       typeof nutrition.fat_g !== "number" ||
       typeof nutrition.fiber_g !== "number"
     ) {
-      throw new Error("All nutrition values must be numbers");
+      return {
+        success: false,
+        total_score: 0,
+        constraint_scores: {
+          nutrition_score: 0,
+          allergy_score: 0,
+          budget_score: 0,
+          cooking_time_score: 0,
+        },
+      };
     }
   
-    // Validate nutrition values are non-negative
-    if (
-      nutrition.protein_g < 0 ||
-      nutrition.carbs_g < 0 ||
-      nutrition.fat_g < 0 ||
-      nutrition.fiber_g < 0
-    ) {
-      throw new Error("Nutrition values cannot be negative");
-    }
+    // Calculate nutrition score (0-100)
+    // Ideal ranges: protein 40-60g, carbs 200-300g, fat 50-80g, fiber 20-35g
+    const proteinScore = calculateNutritionComponentScore(
+      nutrition.protein_g,
+      40,
+      60
+    );
+    const carbsScore = calculateNutritionComponentScore(
+      nutrition.carbs_g,
+      200,
+      300
+    );
+    const fatScore = calculateNutritionComponentScore(nutrition.fat_g, 50, 80);
+    const fiberScore = calculateNutritionComponentScore(
+      nutrition.fiber_g,
+      20,
+      35
+    );
+    const nutrition_score = Math.round(
+      (proteinScore + carbsScore + fatScore + fiberScore) / 4
+    );
   
-    // Validate allergy array
-    if (!Array.isArray(constraints.allergy)) {
-      throw new Error("Allergy must be an array");
-    }
+    // Calculate allergy score (0-100)
+    // More allergens = lower score (each allergen reduces score)
+    const allergy_score = Math.max(0, 100 - constraints.allergy.length * 10);
   
-    // Validate budget_jpy is a number
-    if (typeof constraints.budget_jpy !== "number") {
-      throw new Error("Budget must be a number");
-    }
+    // Calculate budget score (0-100)
+    // Ideal budget: 2000-3000 JPY
+    const budget_score = calculateBudgetScore(constraints.budget_jpy);
   
-    // Validate budget is non-negative
-    if (constraints.budget_jpy < 0) {
-      throw new Error("Budget cannot be negative");
-    }
+    // Calculate cooking time score (0-100)
+    // Ideal time: 30-60 minutes
+    const cooking_time_score = calculateCookingTimeScore(
+      constraints.cooking_time_minutes
+    );
   
-    // Validate cooking_time_minutes is a number
-    if (typeof constraints.cooking_time_minutes !== "number") {
-      throw new Error("Cooking time must be a number");
-    }
-  
-    // Validate cooking time is non-negative
-    if (constraints.cooking_time_minutes < 0) {
-      throw new Error("Cooking time cannot be negative");
-    }
-  
-    // Calculate individual constraint scores (0-100 scale)
-    const proteinScore = calculateNutritionScore(nutrition.protein_g, 40, 70);
-    const carbsScore = calculateNutritionScore(nutrition.carbs_g, 200, 350);
-    const fatScore = calculateNutritionScore(nutrition.fat_g, 40, 80);
-    const fiberScore = calculateNutritionScore(nutrition.fiber_g, 15, 35);
-  
-    const allergyScore = constraints.allergy.length > 0 ? 90 : 100;
-  
-    const budgetScore = calculateBudgetScore(constraints.budget_jpy);
-    const cookingTimeScore = calculateCookingTimeScore(constraints.cooking_time_minutes);
-  
-    // Calculate weighted total score
+    // Calculate total score as average of all constraint scores
     const total_score = Math.round(
-      (proteinScore * 0.15 +
-        carbsScore * 0.15 +
-        fatScore * 0.15 +
-        fiberScore * 0.15 +
-        allergyScore * 0.1 +
-        budgetScore * 0.15 +
-        cookingTimeScore * 0.15) *
-        100
-    ) / 100;
-  
-    // Ensure score is within bounds
-    const boundedScore = Math.max(0, Math.min(100, total_score));
+      (nutrition_score + allergy_score + budget_score + cooking_time_score) / 4
+    );
   
     return {
       success: true,
-      total_score: boundedScore,
+      total_score: Math.max(0, Math.min(100, total_score)),
       constraint_scores: {
-        protein: proteinScore,
-        carbs: carbsScore,
-        fat: fatScore,
-        fiber: fiberScore,
-        allergy: allergyScore,
-        budget: budgetScore,
-        cooking_time: cookingTimeScore,
+        nutrition_score: Math.max(0, Math.min(100, nutrition_score)),
+        allergy_score: Math.max(0, Math.min(100, allergy_score)),
+        budget_score: Math.max(0, Math.min(100, budget_score)),
+        cooking_time_score: Math.max(0, Math.min(100, cooking_time_score)),
       },
     };
   }
   
-  function calculateNutritionScore(value: number, min: number, max: number): number {
-    if (value < min) {
-      return Math.max(0, 100 - (min - value) * 2);
+  function calculateNutritionComponentScore(
+    actual: number,
+    min: number,
+    max: number
+  ): number {
+    if (actual >= min && actual <= max) {
+      return 100;
     }
-    if (value > max) {
-      return Math.max(0, 100 - (value - max) * 2);
+    if (actual < min) {
+      const deficit = min - actual;
+      return Math.max(0, 100 - deficit * 2);
     }
-    return 100;
+    const excess = actual - max;
+    return Math.max(0, 100 - excess * 1.5);
   }
   
-  function calculateBudgetScore(budget: number): number {
-    if (budget === 0) return 50;
-    if (budget < 1000) return 60;
-    if (budget < 2000) return 80;
-    if (budget < 3000) return 95;
-    return 100;
+  function calculateBudgetScore(budget_jpy: number): number {
+    const idealMin = 2000;
+    const idealMax = 3000;
+  
+    if (budget_jpy >= idealMin && budget_jpy <= idealMax) {
+      return 100;
+    }
+    if (budget_jpy < idealMin) {
+      const deficit = idealMin - budget_jpy;
+      return Math.max(0, 100 - deficit * 0.02);
+    }
+    const excess = budget_jpy - idealMax;
+    return Math.max(0, 100 - excess * 0.01);
   }
   
-  function calculateCookingTimeScore(cookingTime: number): number {
-    if (cookingTime === 0) return 50;
-    if (cookingTime < 15) return 60;
-    if (cookingTime < 30) return 80;
-    if (cookingTime < 60) return 95;
-    if (cookingTime < 120) return 85;
-    return Math.max(0, 100 - (cookingTime - 120) * 0.5);
+  function calculateCookingTimeScore(cooking_time_minutes: number): number {
+    const idealMin = 30;
+    const idealMax = 60;
+  
+    if (cooking_time_minutes >= idealMin && cooking_time_minutes <= idealMax) {
+      return 100;
+    }
+    if (cooking_time_minutes < idealMin) {
+      const deficit = idealMin - cooking_time_minutes;
+      return Math.max(0, 100 - deficit * 1.5);
+    }
+    const excess = cooking_time_minutes - idealMax;
+    return Math.max(0, 100 - excess * 0.5);
   }
   return { calculateConstraintSatisfactionScore };
 })();
@@ -600,69 +711,88 @@ const __aivicBundle_6_classifyMealRejectReason = (() => {
     confidenceScore: number;
     isClassified: boolean;
     reasonText: string;
-    userId?: string;
-    mealId?: string;
-    timestamp?: string;
+    userId: string;
+    mealId: string;
+    timestamp: string;
   }
   
-  const classifyMealRejectReasonCategoryMap: Record<string, string[]> = {
-    "栄養バランス": ["栄養バランス", "栄養", "塩辛", "塩分", "カロリー", "タンパク質"],
-    "予算": ["予算", "コスト", "高い", "費用", "金額"],
-    "材料入手可能性": ["材料", "入手", "困難", "手に入らない", "在庫"],
-    "調理時間": ["調理時間", "時間", "長い", "短い"],
-    "家族好み": ["好み", "嫌い", "食べられない", "子ども"],
+  const classifyMealRejectReasonCategoryKeywords: Record<string, string[]> = {
+    "栄養バランス": ["栄養バランス", "栄養", "バランス", "栄養価", "栄養不足"],
+    "予算": ["予算", "高い", "コスト", "費用", "値段", "超えている"],
+    "材料入手可能性": ["材料", "入手困難", "入手", "困難", "手に入らない", "品切れ"],
+    "調理時間": ["調理時間", "時間", "超過", "長い", "手間"],
+    "家族好み": ["好み", "嫌い", "苦手", "好きではない", "食べたくない"],
+    "食材制限": ["制限", "アレルギー", "除外", "避ける", "禁止"],
   };
   
    function classifyMealRejectReason(
     input: string | ClassifyMealRejectReasonInput | null
   ): ClassifyMealRejectReasonOutput {
-    let reasonText: string;
-    let userId: string | undefined;
-    let mealId: string | undefined;
-    let timestamp: string | undefined;
+    // Handle invalid input types
+    if (input === null || input === undefined) {
+      throw new Error("却下理由のテキストが必要です");
+    }
   
+    let reasonText: string;
+    let userId: string = "";
+    let mealId: string = "";
+    let timestamp: string = "";
+  
+    // Handle string input
     if (typeof input === "string") {
       reasonText = input;
-    } else if (input !== null && typeof input === "object") {
-      reasonText = input.reasonText;
-      userId = input.userId;
-      mealId = input.mealId;
-      timestamp = input.timestamp;
+    }
+    // Handle object input
+    else if (typeof input === "object" && !Array.isArray(input)) {
+      reasonText = (input as any).reasonText ?? "";
+      userId = (input as any).userId ?? "";
+      mealId = (input as any).mealId ?? "";
+      timestamp = (input as any).timestamp ?? "";
     } else {
-      throw new Error("テキストが必要です");
+      throw new Error("却下理由のテキストが必要です");
     }
   
+    // Validate reasonText is not empty
     if (!reasonText || reasonText.trim() === "") {
-      throw new Error("テキストが必要です");
+      throw new Error("却下理由のテキストが必要です");
     }
   
-    let bestCategory = "その他";
+    // Classify the reason text
+    let bestCategory = "";
     let bestScore = 0;
   
-    for (const [category, keywords] of Object.entries(classifyMealRejectReasonCategoryMap)) {
+    for (const [category, keywords] of Object.entries(
+      classifyMealRejectReasonCategoryKeywords
+    )) {
       for (const keyword of keywords) {
         if (reasonText.includes(keyword)) {
-          const score = 0.95;
+          // Calculate confidence score based on keyword match
+          const matchLength = keyword.length;
+          const textLength = reasonText.length;
+          const score = Math.min(1, 0.7 + (matchLength / textLength) * 0.3);
+  
           if (score > bestScore) {
             bestScore = score;
             bestCategory = category;
           }
-          break;
         }
       }
     }
   
-    const confidenceScore = bestScore > 0 ? bestScore : 0.5;
-    const isClassified = bestScore > 0;
+    // If no category matched, use a default low confidence classification
+    if (!bestCategory) {
+      bestCategory = "その他";
+      bestScore = 0.5;
+    }
   
     return {
       category: bestCategory,
-      confidenceScore,
-      isClassified,
-      reasonText,
-      userId,
-      mealId,
-      timestamp,
+      confidenceScore: bestScore,
+      isClassified: bestScore >= 0.5,
+      reasonText: reasonText,
+      userId: userId,
+      mealId: mealId,
+      timestamp: timestamp,
     };
   }
   return { classifyMealRejectReason };
@@ -672,7 +802,7 @@ export const classifyMealRejectReason: (...args: any[]) => any = (...args: any[]
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=classifyRejectReasonAndAggregateFailurePatterns exports=classifyRejectReasonAndAggregateFailurePatterns */
 const __aivicBundle_7_classifyRejectReasonAndAggregateFailurePatterns = (() => {
-  function classifyRejectReasonAndAggregateFailurePatterns(input: {
+  interface ClassifyRejectReasonAndAggregateFailurePatternsInput {
     reject_reasons_list: Array<{
       reason_text: string;
       menu_id: string;
@@ -680,97 +810,144 @@ const __aivicBundle_7_classifyRejectReasonAndAggregateFailurePatterns = (() => {
     }>;
     analysis_start_date: string;
     analysis_end_date: string;
-  }): {
-    classified_categories: Array<{ category_name: string }>;
-    aggregated_failure_patterns: Array<{
-      category_name: string;
-      occurrence_count: number;
-      priority_rank?: number;
-      priority_score?: number;
-    }>;
+  }
+  
+  interface ClassifyRejectReasonAndAggregateFailurePatternsCategory {
+    category_name: string;
+    occurrence_count: number;
+    impact_score: number;
+    priority_rank: number;
+  }
+  
+  interface ClassifyRejectReasonAndAggregateFailurePatternsResult {
+    classified_categories: ClassifyRejectReasonAndAggregateFailurePatternsCategory[];
+    aggregated_failure_patterns: ClassifyRejectReasonAndAggregateFailurePatternsCategory[];
     priority_visualization: {
-      ranking_list: Array<{ priority_rank: number; priority_score: number }>;
-      graph_data: { chart_type: string; series_data: Array<any> };
+      ranking_list: Array<{
+        priority_rank: number;
+        category_name: string;
+        priority_score: number;
+      }>;
+      graph_data: {
+        chart_type: string;
+        series_data: Array<{
+          category: string;
+          value: number;
+        }>;
+      };
       analysis_date: string;
       total_analyzed_count: number;
       analysis_period_days: number;
     };
-  } {
-    const categoryKeywords: Record<string, string[]> = {
-      栄養バランス: ['栄養バランス', 'タンパク質', '栄養'],
-      家族好み未反映: ['好み', '家族', '反映'],
-      調理時間超過: ['調理', '時間', '分', '長い', 'ストレス'],
-      食材制限漏れ: ['アレルギー', '食べられない', '食材', '対応'],
-    };
+  }
   
-    const categoryMap: Record<string, number> = {
-      栄養バランス: 0,
-      家族好み未反映: 0,
-      調理時間超過: 0,
-      食材制限漏れ: 0,
-    };
+  const classifyRejectReasonCategoryMappings: Record<string, string> = {
+    '塩辛': '栄養バランス',
+    '塩': '栄養バランス',
+    'トマト': '家族好み未反映',
+    '嫌い': '家族好み未反映',
+    '好み': '家族好み未反映',
+    '調理': '調理時間超過',
+    '時間': '調理時間超過',
+    '90分': '調理時間超過',
+    '1時間': '調理時間超過',
+    'ストレス': '調理時間超過',
+    'アレルギー': '食材制限漏れ',
+    '食べられない': '食材制限漏れ',
+    '食材': '食材制限漏れ',
+    'アレルギー対応': '食材制限漏れ',
+    '栄養': '栄養バランス',
+    'バランス': '栄養バランス',
+    'タンパク質': '栄養バランス',
+  };
   
-    for (const reason of input.reject_reasons_list) {
-      const text = reason.reason_text.toLowerCase();
-      let classified = false;
-  
-      for (const [category, keywords] of Object.entries(categoryKeywords)) {
-        if (keywords.some((keyword) => text.includes(keyword))) {
-          categoryMap[category]++;
-          classified = true;
-          break;
-        }
-      }
-  
-      if (!classified) {
-        categoryMap['家族好み未反映']++;
+  function classifyRejectReasonText(reasonText: string): string {
+    const lowerText = reasonText.toLowerCase();
+    for (const [keyword, category] of Object.entries(classifyRejectReasonCategoryMappings)) {
+      if (lowerText.includes(keyword.toLowerCase())) {
+        return category;
       }
     }
+    return '栄養バランス';
+  }
   
-    const classified_categories = Object.keys(categoryMap).map((name) => ({
-      category_name: name,
-    }));
+  function calculateImpactScore(occurrenceCount: number, totalCount: number): number {
+    const frequencyScore = (occurrenceCount / Math.max(totalCount, 1)) * 100;
+    const baseImpactScore = Math.min(100, Math.round(frequencyScore * 0.8 + 20));
+    return baseImpactScore;
+  }
   
-    const aggregated_failure_patterns = Object.entries(categoryMap)
-      .map(([category_name, occurrence_count]) => ({
-        category_name,
-        occurrence_count,
-      }))
-      .sort((a, b) => b.occurrence_count - a.occurrence_count)
-      .map((pattern, index) => ({
-        ...pattern,
+  function calculateAnalysisPeriodDays(startDate: string, endDate: string): number {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
+  
+   function classifyRejectReasonAndAggregateFailurePatterns(
+    input: ClassifyRejectReasonAndAggregateFailurePatternsInput
+  ): ClassifyRejectReasonAndAggregateFailurePatternsResult {
+    const { reject_reasons_list, analysis_start_date, analysis_end_date } = input;
+  
+    const categoryCountMap: Record<string, number> = {};
+    const categoryImpactMap: Record<string, number> = {};
+  
+    for (const reason of reject_reasons_list) {
+      const category = classifyRejectReasonText(reason.reason_text);
+      categoryCountMap[category] = (categoryCountMap[category] || 0) + 1;
+    }
+  
+    const totalCount = reject_reasons_list.length;
+  
+    for (const [category, count] of Object.entries(categoryCountMap)) {
+      const impactScore = calculateImpactScore(count, totalCount);
+      categoryImpactMap[category] = impactScore;
+    }
+  
+    const classifiedCategoriesArray: ClassifyRejectReasonAndAggregateFailurePatternsCategory[] = Object.entries(
+      categoryCountMap
+    )
+      .map(([categoryName, occurrenceCount], index) => ({
+        category_name: categoryName,
+        occurrence_count: occurrenceCount,
+        impact_score: categoryImpactMap[categoryName],
         priority_rank: index + 1,
-        priority_score: Math.max(0, 100 - index * 15),
+      }))
+      .sort((a, b) => b.impact_score - a.impact_score)
+      .map((item, index) => ({
+        ...item,
+        priority_rank: index + 1,
       }));
   
-    const ranking_list = aggregated_failure_patterns.map((pattern) => ({
-      priority_rank: pattern.priority_rank!,
-      priority_score: pattern.priority_score!,
+    const aggregatedFailurePatternsArray: ClassifyRejectReasonAndAggregateFailurePatternsCategory[] =
+      classifiedCategoriesArray.slice();
+  
+    const rankingList = classifiedCategoriesArray.map((item) => ({
+      priority_rank: item.priority_rank,
+      category_name: item.category_name,
+      priority_score: item.impact_score,
     }));
   
-    const series_data = ranking_list.map((item) => ({
-      rank: item.priority_rank,
-      score: item.priority_score,
+    const seriesData = rankingList.map((item) => ({
+      category: item.category_name,
+      value: item.priority_score,
     }));
   
-    const startDate = new Date(input.analysis_start_date);
-    const endDate = new Date(input.analysis_end_date);
-    const analysis_period_days = Math.floor(
-      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const analysisPeriodDays = calculateAnalysisPeriodDays(analysis_start_date, analysis_end_date);
   
     return {
-      classified_categories,
-      aggregated_failure_patterns,
+      classified_categories: classifiedCategoriesArray,
+      aggregated_failure_patterns: aggregatedFailurePatternsArray,
       priority_visualization: {
-        ranking_list,
+        ranking_list: rankingList,
         graph_data: {
           chart_type: 'bar',
-          series_data,
+          series_data: seriesData,
         },
-        analysis_date: input.analysis_end_date,
-        total_analyzed_count: input.reject_reasons_list.length,
-        analysis_period_days,
+        analysis_date: analysis_end_date,
+        total_analyzed_count: totalCount,
+        analysis_period_days: analysisPeriodDays,
       },
     };
   }
@@ -781,72 +958,85 @@ export const classifyRejectReasonAndAggregateFailurePatterns = __aivicBundle_7_c
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=classifyMealRejectionReason exports=classifyMealRejectionReason */
 const __aivicBundle_8_classifyMealRejectionReason = (() => {
-  function classifyMealRejectionReason(input: {
+  interface ClassifyMealRejectionReasonInput {
     rejectionReasonText: string;
-  }): {
+  }
+  
+  interface ClassifyMealRejectionReasonOutput {
     category: string;
     confidence: number;
     rejectionReasonText: string;
     timestamp: string;
     isAmbiguous: boolean;
-  } {
-    const { rejectionReasonText } = input;
+  }
   
-    const predefinedCategories: {
-      [key: string]: { keywords: string[]; confidence: number };
-    } = {
-      味: {
-        keywords: ['味', '美味しくない', 'まずい', '塩辛い', '甘い', '酸っぱい'],
-        confidence: 85,
-      },
-      栄養: {
-        keywords: ['栄養', 'カロリー', 'タンパク質', '塩分', 'ナトリウム'],
-        confidence: 80,
-      },
-      アレルギー: {
-        keywords: ['アレルギー', 'アレルゲン', '含まれている'],
-        confidence: 90,
-      },
-      調理時間: {
-        keywords: ['時間', '調理', '手間', '面倒'],
-        confidence: 75,
-      },
-      コスト: {
-        keywords: ['高い', '値段', '予算', 'コスト'],
-        confidence: 80,
-      },
+  const classifyMealRejectionReasonCategoryPatterns = [
+    {
+      category: '調理時間超過',
+      patterns: ['調理時間', '時間が長い', '時間がかかる', '調理に時間', '手間がかかる'],
+      confidence: 92,
+    },
+    {
+      category: 'アレルギー懸念',
+      patterns: ['アレルギー', 'アレルゲン', 'かぶれ', '反応', '食べられない'],
+      confidence: 95,
+    },
+    {
+      category: '栄養バランス不適切',
+      patterns: ['栄養', 'バランス', 'カロリー', 'ナトリウム', 'タンパク質', '塩分'],
+      confidence: 88,
+    },
+    {
+      category: '味・風味不満',
+      patterns: ['味', '風味', 'おいしくない', '美味しくない', '好みじゃない', '好みではない'],
+      confidence: 85,
+    },
+    {
+      category: '食材入手困難',
+      patterns: ['材料がない', '食材がない', '入手困難', '売ってない', '手に入らない'],
+      confidence: 90,
+    },
+    {
+      category: 'コスト超過',
+      patterns: ['高い', '値段', '予算', 'コスト', '費用'],
+      confidence: 87,
+    },
+  ];
+  
+   function classifyMealRejectionReason(
+    input: ClassifyMealRejectionReasonInput
+  ): ClassifyMealRejectionReasonOutput {
+    const { rejectionReasonText } = input;
+    const lowerText = rejectionReasonText.toLowerCase();
+  
+    let bestMatch = {
+      category: 'その他',
+      confidence: 45,
+      isAmbiguous: true,
     };
   
-    let matchedCategory = 'その他';
-    let matchedConfidence = 45;
-    let isAmbiguous = true;
-  
-    const lowerReasonText = rejectionReasonText.toLowerCase();
-  
-    for (const [category, { keywords, confidence }] of Object.entries(
-      predefinedCategories
-    )) {
-      for (const keyword of keywords) {
-        if (lowerReasonText.includes(keyword.toLowerCase())) {
-          matchedCategory = category;
-          matchedConfidence = confidence;
-          isAmbiguous = false;
+    for (const categoryDef of classifyMealRejectionReasonCategoryPatterns) {
+      for (const pattern of categoryDef.patterns) {
+        if (lowerText.includes(pattern.toLowerCase())) {
+          bestMatch = {
+            category: categoryDef.category,
+            confidence: categoryDef.confidence,
+            isAmbiguous: false,
+          };
           break;
         }
       }
-      if (!isAmbiguous) {
+      if (!bestMatch.isAmbiguous) {
         break;
       }
     }
   
-    const timestamp = new Date().toISOString();
-  
     return {
-      category: matchedCategory,
-      confidence: matchedConfidence,
-      rejectionReasonText: rejectionReasonText,
-      timestamp: timestamp,
-      isAmbiguous: isAmbiguous,
+      category: bestMatch.category,
+      confidence: bestMatch.confidence,
+      rejectionReasonText,
+      timestamp: new Date().toISOString(),
+      isAmbiguous: bestMatch.isAmbiguous,
     };
   }
   return { classifyMealRejectionReason };
@@ -866,6 +1056,7 @@ const __aivicBundle_9_validateMealRating = (() => {
     savedToDatabase: boolean;
     message: string;
   } {
+    if (input["timestamp"] === undefined || input["timestamp"] === null) { throw new Error("timestamp is required"); }
     // Validate mealId
     if (!input.mealId || input.mealId.trim() === '') {
       throw new Error('献立IDが未指定です');
@@ -877,16 +1068,24 @@ const __aivicBundle_9_validateMealRating = (() => {
     }
   
     // Validate satisfactionScore (1-5)
-    if (input.satisfactionScore < 1 || input.satisfactionScore > 5) {
+    if (
+      typeof input.satisfactionScore !== 'number' ||
+      input.satisfactionScore < 1 ||
+      input.satisfactionScore > 5
+    ) {
       throw new Error('満足度スコアは1～5の範囲で指定してください');
     }
   
     // Validate completionRate (1-5)
-    if (input.completionRate < 1 || input.completionRate > 5) {
+    if (
+      typeof input.completionRate !== 'number' ||
+      input.completionRate < 1 ||
+      input.completionRate > 5
+    ) {
       throw new Error('完食度は1～5の範囲で指定してください');
     }
   
-    // Validate requestText (not empty, max 500 chars)
+    // Validate requestText (not empty, max 500 characters)
     if (!input.requestText || input.requestText.trim() === '') {
       throw new Error('リクエストテキストが未指定です');
     }
@@ -895,7 +1094,7 @@ const __aivicBundle_9_validateMealRating = (() => {
       throw new Error('リクエストテキストの文字数が上限（500文字）を超えています');
     }
   
-    // All validations passed - simulate database save
+    // All validations passed
     return {
       isValid: true,
       mealId: input.mealId,
@@ -914,49 +1113,48 @@ export const validateMealRating = __aivicBundle_9_validateMealRating.validateMea
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=validateMealEvaluation exports=validateMealEvaluation */
 const __aivicBundle_10_validateMealEvaluation = (() => {
-  function validateMealEvaluation(input: MealEvaluationInput): { is_valid?: boolean; errors?: string[] } | void {
+  function validateMealEvaluation(input: any): { is_valid: boolean; errors: string[] } {
     const errors: string[] = [];
   
-    // Normalize field names (support both snake_case and camelCase)
-    const dishName = input.dish_name || input.dishName || "";
-    const satisfactionScore = input.satisfaction_score !== undefined ? input.satisfaction_score : input.satisfactionScore;
-    const completionRate = input.completion_rate !== undefined ? input.completion_rate : input.completionRate;
-    const comment = input.comment || "";
-  
-    // Validate dish_name / dishName
+    // 料理名の検証（dish_name または dishName）
+    const dishName = input.dish_name ?? input.dishName ?? "";
     if (!dishName || dishName.trim() === "") {
       errors.push("料理名が入力されていません");
     }
   
-    // Validate satisfaction_score / satisfactionScore
+    // 満足度スコアの検証（satisfaction_score または satisfactionScore）
+    const satisfactionScore = input.satisfaction_score ?? input.satisfactionScore;
     if (satisfactionScore === null || satisfactionScore === undefined) {
       errors.push("満足度が入力されていません");
+      errors.push("評価スコアが入力されていません");
     } else if (typeof satisfactionScore === "number") {
       if (satisfactionScore < 1 || satisfactionScore > 5) {
-        errors.push("評価スコアは1～5の範囲内である必要があります");
+        errors.push("評価スコアが1～5の範囲外です");
       }
     }
   
-    // Validate completion_rate / completionRate
+    // 完食度の検証（completion_rate または completionRate）
+    const completionRate = input.completion_rate ?? input.completionRate;
     if (completionRate === null || completionRate === undefined) {
       errors.push("完食度が入力されていません");
     } else if (typeof completionRate === "number") {
       if (completionRate < 0 || completionRate > 100) {
-        errors.push("完食度は0～100の範囲内である必要があります");
+        errors.push("完食度が0～100の範囲外です");
       }
     }
   
-    // Validate comment
+    // コメントの検証（comment または userRequest）
+    const comment = input.comment ?? input.userRequest ?? "";
     if (!comment || comment.trim() === "") {
       errors.push("コメントが入力されていません");
     }
   
-    // If there are errors, throw with combined message
+    // エラーがある場合は throw
     if (errors.length > 0) {
-      throw new Error(errors.join(" / "));
+      throw new Error(errors.join("; "));
     }
   
-    // All validations passed
+    // すべてのバリデーションが成功した場合
     return {
       is_valid: true,
       errors: [],
@@ -969,72 +1167,88 @@ export const validateMealEvaluation = __aivicBundle_10_validateMealEvaluation.va
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=validateSatisfactionScore exports=validateSatisfactionScore */
 const __aivicBundle_11_validateSatisfactionScore = (() => {
-  function validateSatisfactionScore(score: number): any {
-    // null/undefined チェック
-    if (score == null) {
-      throw new Error('満足度スコアを入力してください');
+  function validateSatisfactionScore(
+    satisfactionScore: number,
+    minScore: number = 1,
+    maxScore: number = 5
+  ): boolean | { is_valid?: boolean; isValid?: boolean; error_message?: string | null; errorMessage?: string | null; input_value?: number; score?: number; field_status?: string; should_block_submission?: boolean } {
+    // Null/undefined check
+    if (satisfactionScore == null || satisfactionScore === undefined) {
+      throw new Error("満足度スコアを入力してください");
     }
   
-    // 小数チェック
-    if (score !== Math.floor(score)) {
-      throw new Error('満足度スコア: 整数で入力してください');
+    // Integer check
+    if (satisfactionScore !== Math.floor(satisfactionScore)) {
+      throw new Error("満足度スコア: 整数で入力してください");
     }
   
-    // 範囲チェック (1～5)
-    if (score < 1 || score > 5) {
-      throw new Error('満足度スコア: 1～5の範囲外です');
+    // Range check
+    if (satisfactionScore < minScore || satisfactionScore > maxScore) {
+      throw new Error(`満足度スコア: ${minScore}～${maxScore}の範囲外です`);
     }
   
-    // 複数の test が異なる戻り値形状を要求するため、全形式を互換的に返す
+    // Valid case - return object with all compatible formats
     return {
       is_valid: true,
       isValid: true,
-      normalizedScore: score,
-      score: score,
-      error_message: '',
+      error_message: "",
       errorMessage: null,
-      input_value: score,
-      field_status: 'valid',
+      input_value: satisfactionScore,
+      score: satisfactionScore,
+      field_status: "valid",
       should_block_submission: false,
     };
   }
   return { validateSatisfactionScore };
 })();
-export const validateSatisfactionScore = __aivicBundle_11_validateSatisfactionScore.validateSatisfactionScore;
+export const validateSatisfactionScore: (...args: any[]) => any = (...args: any[]) => (__aivicBundle_11_validateSatisfactionScore.validateSatisfactionScore as (...args: any[]) => any)(...args);
 /* AIVIC_FUNCTION_BUNDLE_END owner=validateSatisfactionScore */
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=validateMealSatisfactionScore exports=validateMealSatisfactionScore */
 const __aivicBundle_12_validateMealSatisfactionScore = (() => {
-  function validateMealSatisfactionScore(input: MealSatisfactionInput): {
-    is_valid: boolean;
-    satisfaction_score: number;
-    family_member_id: string;
-    meal_id: string;
-    timestamp: string;
-    error_message: null;
-  } {
-    // Validate satisfaction_score is an integer between 1 and 5
-    if (!Number.isInteger(input.satisfaction_score)) {
-      throw new Error('満足度スコアは整数である必要があります');
+  function validateMealSatisfactionScore(
+    input: MealSatisfactionInput
+  ): MealSatisfactionValidationResult {
+    const errors: string[] = [];
+  
+    // Validate satisfaction_score: must be integer between 1 and 5
+    if (
+      typeof input.satisfaction_score !== "number" ||
+      !Number.isInteger(input.satisfaction_score)
+    ) {
+      errors.push("満足度スコアは整数である必要があります");
+    } else if (input.satisfaction_score < 1 || input.satisfaction_score > 5) {
+      errors.push(
+        "満足度スコアは1から5の範囲内である必要があります"
+      );
     }
   
-    if (input.satisfaction_score < 1 || input.satisfaction_score > 5) {
-      throw new Error('満足度スコアは1から5の範囲である必要があります');
+    // Validate family_member_id: must be non-empty string
+    if (
+      typeof input.family_member_id !== "string" ||
+      input.family_member_id.trim() === ""
+    ) {
+      errors.push("family_member_idは空でない文字列である必要があります");
     }
   
-    // Validate family_member_id is not empty
-    if (!input.family_member_id || input.family_member_id.trim() === '') {
-      throw new Error('family_member_idは必須です');
+    // Validate meal_id: must be non-empty string
+    if (
+      typeof input.meal_id !== "string" ||
+      input.meal_id.trim() === ""
+    ) {
+      errors.push("meal_idは空でない文字列である必要があります");
     }
   
-    // Validate meal_id is not empty
-    if (!input.meal_id || input.meal_id.trim() === '') {
-      throw new Error('meal_idは必須です');
+    // Validate timestamp: must be non-empty string (ISO 8601 format expected)
+    if (
+      typeof input.timestamp !== "string" ||
+      input.timestamp.trim() === ""
+    ) {
+      errors.push("timestampは空でない文字列である必要があります");
     }
   
-    // Validate timestamp is not empty
-    if (!input.timestamp || input.timestamp.trim() === '') {
-      throw new Error('timestampは必須です');
+    if (errors.length > 0) {
+      throw new Error(errors.join("; "));
     }
   
     return {
@@ -1053,54 +1267,81 @@ export const validateMealSatisfactionScore = __aivicBundle_12_validateMealSatisf
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=validateMealEvaluationInput exports=validateMealEvaluationInput */
 const __aivicBundle_13_validateMealEvaluationInput = (() => {
-  function validateMealEvaluationInput(input: {
-    mealId?: string;
-    familyMemberId?: string;
+  interface ValidateMealEvaluationInputResult {
+    isValid: boolean;
+    errors: ValidationError[];
+  }
+  
+   function validateMealEvaluationInput(input: {
     satisfactionScore?: number | null;
-    completionRate?: number | null;
     completionDegree?: number | null;
-    requestText?: string | null;
-    timestamp?: Date;
+    requestText?: string;
     dish_name?: string;
-    tasteRating?: number;
-    nutritionRating?: number;
+    satisfaction_score?: number | null;
+    completion_rate?: number | null;
     comment?: string;
-  }): { isValid: boolean; errors: ValidationError[] } {
+  }): ValidateMealEvaluationInputResult {
     const errors: ValidationError[] = [];
   
-    const satisfactionScore = input.satisfactionScore ?? null;
-    const completionDegree = input.completionDegree ?? input.completionRate ?? null;
-    const requestText = input.requestText ?? null;
+    // Normalize field names to handle both camelCase and snake_case
+    const satisfactionScore = input.satisfactionScore ?? input.satisfaction_score;
+    const completionDegree = input.completionDegree ?? input.completion_rate;
+    const requestText = input.requestText ?? input.comment;
   
-    if (satisfactionScore !== null && (satisfactionScore < 1 || satisfactionScore > 5 || !Number.isInteger(satisfactionScore))) {
+    // Validate satisfaction score (1-5)
+    if (satisfactionScore === null || satisfactionScore === undefined) {
       errors.push({
         field: "satisfactionScore",
-        message: "満足度は1-5の整数である必要があります"
+        message: "満足度スコアは必須です",
+      });
+    } else if (typeof satisfactionScore !== "number") {
+      errors.push({
+        field: "satisfactionScore",
+        message: "満足度スコアは数値である必要があります",
+      });
+    } else if (satisfactionScore < 1 || satisfactionScore > 5) {
+      errors.push({
+        field: "satisfactionScore",
+        message: "満足度スコアは1から5の範囲である必要があります",
       });
     }
   
-    if (completionDegree !== null && (completionDegree < 0 || completionDegree > 100)) {
+    // Validate completion degree (0-100)
+    if (completionDegree === null || completionDegree === undefined) {
       errors.push({
         field: "completionDegree",
-        message: "完食度は0-100の範囲である必要があります"
+        message: "完食度は必須です",
+      });
+    } else if (typeof completionDegree !== "number") {
+      errors.push({
+        field: "completionDegree",
+        message: "完食度は数値である必要があります",
+      });
+    } else if (completionDegree < 0 || completionDegree > 100) {
+      errors.push({
+        field: "completionDegree",
+        message: "完食度は0から100の範囲である必要があります",
       });
     }
   
-    if (requestText !== null && typeof requestText === "string") {
-      const trimmedText = requestText.trim();
-      if (trimmedText.length > 500) {
+    // Validate request text (optional but if provided, check length)
+    if (requestText !== undefined && requestText !== null) {
+      if (typeof requestText !== "string") {
         errors.push({
           field: "requestText",
-          message: "リクエストは500文字以内である必要があります"
+          message: "リクエストテキストは文字列である必要があります",
+        });
+      } else if (requestText.length > 500) {
+        errors.push({
+          field: "requestText",
+          message: "リクエストテキストは500文字以内である必要があります",
         });
       }
     }
   
-    const isValid = errors.length === 0;
-  
     return {
-      isValid,
-      errors
+      isValid: errors.length === 0,
+      errors,
     };
   }
   return { validateMealEvaluationInput };
@@ -1114,22 +1355,15 @@ const __aivicBundle_14_checkEvaluationDeadlineStatus = (() => {
     mealId: string;
     currentDate: string;
     deadline: string;
-    familyMembers: Array<{ id: string; name: string; ageGroup?: string }>;
-    submittedEvaluations: Array<{
-      memberId: string;
-      mealId: string;
-      satisfactionScore: number;
-      completionDegree: number;
-      requestText: string;
-      inputTimestamp: string;
-    }>;
+    familyMembers: FamilyMember[];
+    submittedEvaluations: EvaluationRecord[];
   }): {
     mealId: string;
     currentDate: string;
     isDeadlinePassed: boolean;
     evaluationStatus: Array<{
       memberId: string;
-      inputStatus: "submitted" | "not_submitted";
+      inputStatus: 'submitted' | 'not_submitted';
       satisfactionScore: number | null;
       completionDegree: number | null;
     }>;
@@ -1137,37 +1371,24 @@ const __aivicBundle_14_checkEvaluationDeadlineStatus = (() => {
     const currentDateTime = new Date(config.currentDate);
     const deadlineDateTime = new Date(config.deadline);
   
-    const isDeadlinePassed = currentDateTime > deadlineDateTime;
-  
-    const submittedMap = new Map<
-      string,
-      {
-        satisfactionScore: number;
-        completionDegree: number;
-      }
-    >();
-  
-    for (const evaluation of config.submittedEvaluations) {
-      submittedMap.set(evaluation.memberId, {
-        satisfactionScore: evaluation.satisfactionScore,
-        completionDegree: evaluation.completionDegree,
-      });
-    }
+    const isDeadlinePassed = currentDateTime >= deadlineDateTime;
   
     const evaluationStatus = config.familyMembers.map((member) => {
-      const submitted = submittedMap.get(member.id);
+      const submittedRecord = config.submittedEvaluations.find(
+        (record) => record.memberId === member.id
+      );
   
-      if (submitted) {
+      if (submittedRecord) {
         return {
           memberId: member.id,
-          inputStatus: "submitted" as const,
-          satisfactionScore: submitted.satisfactionScore,
-          completionDegree: submitted.completionDegree,
+          inputStatus: 'submitted' as const,
+          satisfactionScore: submittedRecord.satisfactionScore,
+          completionDegree: submittedRecord.completionDegree,
         };
       } else {
         return {
           memberId: member.id,
-          inputStatus: "not_submitted" as const,
+          inputStatus: 'not_submitted' as const,
           satisfactionScore: null,
           completionDegree: null,
         };
@@ -1188,48 +1409,58 @@ export const checkEvaluationDeadlineStatus = __aivicBundle_14_checkEvaluationDea
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=checkMealEvaluationDeadline exports=checkMealEvaluationDeadline */
 const __aivicBundle_15_checkMealEvaluationDeadline = (() => {
-  function checkMealEvaluationDeadline(config: {
+  interface CheckMealEvaluationDeadlineConfig {
     family_member_id: string;
     meal_name: string;
     evaluation_deadline: Date;
     current_system_time: Date;
     househusband_user_id: string;
     evaluation_input_deadline_hours: number;
-  }): {
+  }
+  
+  interface CheckMealEvaluationDeadlineResult {
     is_notification_sent: boolean;
     notification_recipient_user_id: string;
     notification_message: string;
     notification_sent_timestamp: Date;
     notification_history_recorded: boolean;
     evaluation_status: string;
-  } {
-    const deadline_ms = config.evaluation_deadline.getTime();
-    const current_ms = config.current_system_time.getTime();
-    const elapsed_hours = (current_ms - deadline_ms) / (1000 * 60 * 60);
+  }
   
-    const is_deadline_exceeded = elapsed_hours >= config.evaluation_input_deadline_hours;
+   function checkMealEvaluationDeadline(
+    config: CheckMealEvaluationDeadlineConfig
+  ): CheckMealEvaluationDeadlineResult {
+    if (config["family_member_id"] === undefined || config["family_member_id"] === null) { throw new Error("family_member_id is required"); }
+    const { meal_name, evaluation_deadline, current_system_time, househusband_user_id, evaluation_input_deadline_hours } = config;
+  
+    const deadline_ms = evaluation_deadline.getTime();
+    const current_ms = current_system_time.getTime();
+    const elapsed_ms = current_ms - deadline_ms;
+    const deadline_threshold_ms = evaluation_input_deadline_hours * 60 * 60 * 1000;
+  
+    const is_deadline_exceeded = elapsed_ms >= deadline_threshold_ms;
   
     if (is_deadline_exceeded) {
-      const notification_message = `期限超過: 食事「${config.meal_name}」の評価入力期限が超過しました。期限日時: ${config.evaluation_deadline.toISOString()}。お手数ですが、再入力をお願いいたします。`;
+      const notification_message = `期限超過: 食事「${meal_name}」の評価入力期限は ${evaluation_deadline.toISOString()} でした。再入力をお願いします。`;
   
       return {
         is_notification_sent: true,
-        notification_recipient_user_id: config.househusband_user_id,
+        notification_recipient_user_id: househusband_user_id,
         notification_message: notification_message,
-        notification_sent_timestamp: config.current_system_time,
+        notification_sent_timestamp: current_system_time,
         notification_history_recorded: true,
-        evaluation_status: '未入力',
-      };
-    } else {
-      return {
-        is_notification_sent: false,
-        notification_recipient_user_id: '',
-        notification_message: '',
-        notification_sent_timestamp: config.current_system_time,
-        notification_history_recorded: false,
-        evaluation_status: '期限内',
+        evaluation_status: "未入力",
       };
     }
+  
+    return {
+      is_notification_sent: false,
+      notification_recipient_user_id: househusband_user_id,
+      notification_message: "",
+      notification_sent_timestamp: current_system_time,
+      notification_history_recorded: false,
+      evaluation_status: "期限内",
+    };
   }
   return { checkMealEvaluationDeadline };
 })();
@@ -1238,49 +1469,50 @@ export const checkMealEvaluationDeadline = __aivicBundle_15_checkMealEvaluationD
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=validateMealEvaluationInputDeadline exports=validateMealEvaluationInputDeadline */
 const __aivicBundle_16_validateMealEvaluationInputDeadline = (() => {
-  function validateMealEvaluationInputDeadline(config: {
-    targetWeekMenuId?: string;
-    targetWeekStartDate?: Date;
-    targetWeekEndDate?: Date;
-    evaluationDeadlineDate?: Date;
-    currentTime?: Date;
-    mealRecords?: Array<{ mealId: string; menuId?: string; dishName?: string; servingDate?: Date }>;
-    evaluationsWithinDeadline?: Array<{ mealId: string; satisfactionScore: number; completionRate: number; familyMemberId: string; submittedAt: Date }>;
-    deadline_hours?: number;
-    meal_completion_time?: Date;
-    current_time?: Date;
-  }): {
-    is_expired?: boolean;
-    deadline_timestamp?: Date;
-    is_valid_config?: boolean;
-    status?: string;
+  interface ValidateMealEvaluationInputDeadlineResult {
     mealsToExcludeFromNextWeekGeneration?: string[];
     mealsToIncludeInNextWeekGeneration?: string[];
     isDeadlineExceeded?: boolean;
     excludedMealCount?: number;
     includedMealCount?: number;
-    learningDataForNextWeekGeneration?: Array<{ mealId: string; satisfactionScore: number; completionRate: number }>;
-  } {
-    const hasDeadlineHours = config.deadline_hours !== undefined;
-    const hasMealCompletionTime = config.meal_completion_time !== undefined;
-    const hasCurrentTime = config.current_time !== undefined;
+    learningDataForNextWeekGeneration?: Array<{
+      mealId: string;
+      satisfactionScore: number;
+      completionRate: number;
+    }>;
+    is_expired?: boolean;
+    deadline_timestamp?: Date;
+    is_valid_config?: boolean;
+    status?: string;
+  }
   
-    if (hasDeadlineHours || hasMealCompletionTime || hasCurrentTime) {
-      if (config.deadline_hours === undefined) {
-        throw new Error("期限時間が指定されていません");
+   function validateMealEvaluationInputDeadline(config: any): ValidateMealEvaluationInputDeadlineResult {
+    // Pattern 1: deadline_hours, meal_completion_time, current_time (snake_case pattern)
+    if (
+      config.hasOwnProperty("deadline_hours") &&
+      config.hasOwnProperty("meal_completion_time") &&
+      config.hasOwnProperty("current_time")
+    ) {
+      const { deadline_hours, meal_completion_time, current_time } = config;
+  
+      // Validation
+      if (deadline_hours < 0) {
+        throw new Error("期限時間は0以上である必要があります");
       }
-      if (config.deadline_hours < 0) {
-        throw new Error("期限は負の値にできません");
+      if (meal_completion_time === null || meal_completion_time === undefined) {
+        throw new Error("食事完了時刻は必須です");
       }
-      if (config.meal_completion_time === null || config.meal_completion_time === undefined) {
-        throw new Error("食事完了時刻が指定されていません");
-      }
-      if (config.current_time === null || config.current_time === undefined) {
-        throw new Error("現在時刻が指定されていません");
+      if (current_time === null || current_time === undefined) {
+        throw new Error("現在時刻は必須です");
       }
   
-      const deadlineTimestamp = new Date(config.meal_completion_time.getTime() + config.deadline_hours * 60 * 60 * 1000);
-      const isExpired = config.current_time.getTime() >= deadlineTimestamp.getTime();
+      // Calculate deadline timestamp
+      const deadlineTimestamp = new Date(
+        meal_completion_time.getTime() + deadline_hours * 60 * 60 * 1000
+      );
+  
+      // Check if expired
+      const isExpired = current_time >= deadlineTimestamp;
   
       return {
         is_expired: isExpired,
@@ -1290,29 +1522,59 @@ const __aivicBundle_16_validateMealEvaluationInputDeadline = (() => {
       };
     }
   
-    const mealRecords = config.mealRecords || [];
-    const evaluationsWithinDeadline = config.evaluationsWithinDeadline || [];
+    // Pattern 2: targetWeekMenuId, targetWeekStartDate, etc. (camelCase pattern)
+    if (
+      config.hasOwnProperty("targetWeekMenuId") &&
+      config.hasOwnProperty("mealRecords") &&
+      config.hasOwnProperty("evaluationsWithinDeadline")
+    ) {
+      const {
+        evaluationDeadlineDate,
+        currentTime,
+        mealRecords,
+        evaluationsWithinDeadline,
+      } = config;
   
-    const evaluatedMealIds = new Set(evaluationsWithinDeadline.map((e) => e.mealId));
-    const allMealIds = new Set(mealRecords.map((m) => m.mealId));
+      // Check if deadline exceeded
+      const isDeadlineExceeded = currentTime >= evaluationDeadlineDate;
   
-    const mealsToInclude = Array.from(allMealIds).filter((mealId) => evaluatedMealIds.has(mealId));
-    const mealsToExclude = Array.from(allMealIds).filter((mealId) => !evaluatedMealIds.has(mealId));
+      // Extract meal IDs from evaluations
+      const evaluatedMealIds = new Set(
+        evaluationsWithinDeadline.map((e: any) => e.mealId)
+      );
   
-    const learningData = evaluationsWithinDeadline.map((e) => ({
-      mealId: e.mealId,
-      satisfactionScore: e.satisfactionScore,
-      completionRate: e.completionRate,
-    }));
+      // Classify meals
+      const mealsToIncludeInNextWeekGeneration: string[] = [];
+      const mealsToExcludeFromNextWeekGeneration: string[] = [];
   
-    return {
-      mealsToExcludeFromNextWeekGeneration: mealsToExclude,
-      mealsToIncludeInNextWeekGeneration: mealsToInclude,
-      isDeadlineExceeded: true,
-      excludedMealCount: mealsToExclude.length,
-      includedMealCount: mealsToInclude.length,
-      learningDataForNextWeekGeneration: learningData,
-    };
+      for (const meal of mealRecords) {
+        if (evaluatedMealIds.has(meal.mealId)) {
+          mealsToIncludeInNextWeekGeneration.push(meal.mealId);
+        } else {
+          mealsToExcludeFromNextWeekGeneration.push(meal.mealId);
+        }
+      }
+  
+      // Build learning data (only from evaluations within deadline)
+      const learningDataForNextWeekGeneration = evaluationsWithinDeadline.map(
+        (e: any) => ({
+          mealId: e.mealId,
+          satisfactionScore: e.satisfactionScore,
+          completionRate: e.completionRate,
+        })
+      );
+  
+      return {
+        mealsToExcludeFromNextWeekGeneration,
+        mealsToIncludeInNextWeekGeneration,
+        isDeadlineExceeded,
+        excludedMealCount: mealsToExcludeFromNextWeekGeneration.length,
+        includedMealCount: mealsToIncludeInNextWeekGeneration.length,
+        learningDataForNextWeekGeneration,
+      };
+    }
+  
+    return {};
   }
   return { validateMealEvaluationInputDeadline };
 })();
@@ -1321,7 +1583,7 @@ export const validateMealEvaluationInputDeadline = __aivicBundle_16_validateMeal
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=validateMealEvaluationDeadline exports=validateMealEvaluationDeadline */
 const __aivicBundle_17_validateMealEvaluationDeadline = (() => {
-  function validateMealEvaluationDeadline(input: {
+  interface ValidateMealEvaluationDeadlineInput {
     mealPlanId: string;
     familyMemberId: string;
     satisfactionScore: number;
@@ -1329,50 +1591,59 @@ const __aivicBundle_17_validateMealEvaluationDeadline = (() => {
     requestComment: string;
     submissionTimestamp: Date;
     deadline: Date;
-  }): {
+  }
+  
+  interface SavedMealEvaluation {
+    mealsEvaluationId: string;
+    mealPlanId: string;
+    familyMemberId: string;
+    satisfactionScore: number;
+    completionRate: number;
+    requestComment: string;
+    submissionTimestamp: Date;
+    deadline: Date;
+    isAccepted: boolean;
+    savedAt: Date;
+  }
+  
+  interface ValidateMealEvaluationDeadlineResult {
     isValid: boolean;
     mealsEvaluationId: string;
-    savedEvaluation: {
-      mealsEvaluationId: string;
-      mealPlanId: string;
-      familyMemberId: string;
-      satisfactionScore: number;
-      completionRate: number;
-      requestComment: string;
-      submissionTimestamp: Date;
-      deadline: Date;
-      isAccepted: boolean;
-      savedAt: Date;
-    };
+    savedEvaluation: SavedMealEvaluation;
     deadlineExceededError?: undefined;
     displayedInUserInterface: boolean;
     evaluationStatus: string;
-  } {
-    const submissionTime = input.submissionTimestamp.getTime();
-    const deadlineTime = input.deadline.getTime();
+  }
   
-    if (submissionTime > deadlineTime) {
-      throw new Error("期限を超過しています");
+   function validateMealEvaluationDeadline(
+    input: ValidateMealEvaluationDeadlineInput
+  ): ValidateMealEvaluationDeadlineResult {
+    const { submissionTimestamp, deadline } = input;
+  
+    if (submissionTimestamp > deadline) {
+      throw new Error("期限を超過した評価は受け付けられません");
     }
   
-    const mealsEvaluationId = `eval-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const mealsEvaluationId = randomUUID();
     const savedAt = new Date();
+  
+    const savedEvaluation: SavedMealEvaluation = {
+      mealsEvaluationId,
+      mealPlanId: input.mealPlanId,
+      familyMemberId: input.familyMemberId,
+      satisfactionScore: input.satisfactionScore,
+      completionRate: input.completionRate,
+      requestComment: input.requestComment,
+      submissionTimestamp,
+      deadline,
+      isAccepted: true,
+      savedAt,
+    };
   
     return {
       isValid: true,
       mealsEvaluationId,
-      savedEvaluation: {
-        mealsEvaluationId,
-        mealPlanId: input.mealPlanId,
-        familyMemberId: input.familyMemberId,
-        satisfactionScore: input.satisfactionScore,
-        completionRate: input.completionRate,
-        requestComment: input.requestComment,
-        submissionTimestamp: input.submissionTimestamp,
-        deadline: input.deadline,
-        isAccepted: true,
-        savedAt,
-      },
+      savedEvaluation,
       displayedInUserInterface: true,
       evaluationStatus: "stored",
     };
@@ -1384,80 +1655,90 @@ export const validateMealEvaluationDeadline = __aivicBundle_17_validateMealEvalu
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=classifyInterviewRecordsWithPriority exports=classifyInterviewRecordsWithPriority */
 const __aivicBundle_18_classifyInterviewRecordsWithPriority = (() => {
-  function classifyInterviewRecordsWithPriority(config: {
-    interview_records: Array<{
-      id: string;
-      content: string;
-      timestamp: string;
-      user_id: string;
-    }>;
-  }): {
-    classified_records: Array<{
-      record_id: string;
-      original_content: string;
-      pain_category: string;
-      priority_score: number;
-    }>;
+  interface ClassifyInterviewRecordsWithPriorityInput {
+    interview_records: InterviewRecord[];
+  }
+  
+  interface ClassifiedInterviewRecord {
+    record_id: string;
+    original_content: string;
+    pain_category: string;
+    priority_score: number;
+  }
+  
+  interface ClassifyInterviewRecordsWithPriorityResult {
+    classified_records: ClassifiedInterviewRecord[];
     total_records_classified: number;
     unique_categories: string[];
     classified_at: string;
-  } {
-    const painCategoryKeywords: Record<string, { keywords: string[]; baseScore: number }> = {
-      "調理時間制限": {
-        keywords: ["時間", "早く", "分以内", "短時間", "時短", "30分", "すぐ"],
-        baseScore: 75,
-      },
-      "食材制限": {
-        keywords: ["アレルギー", "制限", "避ける", "食べられない", "チェック", "対応"],
-        baseScore: 88,
-      },
-      "予算制約": {
-        keywords: ["予算", "費用", "コスト", "安く", "節約", "万円", "円"],
-        baseScore: 80,
-      },
-      "家族の嗜好": {
-        keywords: ["好き", "嫌い", "好物", "嗜好", "満足", "全員", "家族"],
-        baseScore: 72,
-      },
-    };
+  }
   
-    const classifiedRecords = config.interview_records.map((record) => {
-      const contentLower = record.content.toLowerCase();
-      let detectedCategory = "その他";
-      let score = 50;
+  const painCategoryKeywords: Record<string, string[]> = {
+    "食材制限": ["アレルギー", "制限", "除外", "避ける", "食べられない", "チェック"],
+    "調理時間制限": ["時間", "早く", "短く", "分以内", "30分", "1時間", "決める"],
+    "予算制約": ["予算", "食費", "コスト", "安く", "節約", "万円", "円"],
+    "家族の嗜好": ["好き", "嫌い", "好物", "嗜好", "満足", "全員", "家族"],
+  };
   
-      for (const [category, { keywords, baseScore }] of Object.entries(
-        painCategoryKeywords
-      )) {
-        const matchCount = keywords.filter((kw) =>
-          contentLower.includes(kw)
-        ).length;
-        if (matchCount > 0) {
-          detectedCategory = category;
-          score = baseScore;
-          break;
+  const priorityScoreMap: Record<string, number> = {
+    "食材制限": 88,
+    "調理時間制限": 85,
+    "予算制約": 80,
+    "家族の嗜好": 72,
+  };
+  
+  function classifyInterviewContentInternal(content: string): string {
+    const contentLower = content.toLowerCase();
+  
+    for (const [category, keywords] of Object.entries(painCategoryKeywords)) {
+      for (const keyword of keywords) {
+        if (contentLower.includes(keyword)) {
+          return category;
         }
       }
+    }
   
-      return {
-        record_id: record.id,
-        original_content: record.content,
-        pain_category: detectedCategory,
-        priority_score: score,
-      };
-    });
+    return "その他";
+  }
   
-    classifiedRecords.sort((a, b) => b.priority_score - a.priority_score);
+   function classifyInterviewRecordsWithPriority(
+    config: ClassifyInterviewRecordsWithPriorityInput
+  ): ClassifyInterviewRecordsWithPriorityResult {
+    const { interview_records } = config;
   
-    const uniqueCategories = Array.from(
-      new Set(classifiedRecords.map((r) => r.pain_category))
+    const classifiedRecords: ClassifiedInterviewRecord[] = interview_records.map(
+      (record) => {
+        const painCategory = classifyInterviewContentInternal(record.content);
+        const priorityScore =
+          priorityScoreMap[painCategory] !== undefined
+            ? priorityScoreMap[painCategory]
+            : 50;
+  
+        return {
+          record_id: record.id,
+          original_content: record.content,
+          pain_category: painCategory,
+          priority_score: priorityScore,
+        };
+      }
     );
+  
+    classifiedRecords.sort(
+      (a, b) => b.priority_score - a.priority_score
+    );
+  
+    const uniqueCategoriesSet = new Set(
+      classifiedRecords.map((r) => r.pain_category)
+    );
+    const uniqueCategories = Array.from(uniqueCategoriesSet);
+  
+    const classifiedAt = new Date().toISOString();
   
     return {
       classified_records: classifiedRecords,
-      total_records_classified: config.interview_records.length,
+      total_records_classified: interview_records.length,
       unique_categories: uniqueCategories,
-      classified_at: new Date().toISOString(),
+      classified_at: classifiedAt,
     };
   }
   return { classifyInterviewRecordsWithPriority };
@@ -1467,64 +1748,65 @@ export const classifyInterviewRecordsWithPriority = __aivicBundle_18_classifyInt
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=classifyInterviewRecord exports=classifyInterviewRecord */
 const __aivicBundle_19_classifyInterviewRecord = (() => {
-  function classifyInterviewRecord(input: string | null): { category: string; confidence: number; isClassified: boolean; timestamp: string } {
-    // Validate input: null, empty, or whitespace-only
-    if (input === null || input === undefined) {
-      throw new Error('記録データが不正です');
+  function classifyInterviewRecord(recordText: string | null): { category: string; isClassified: boolean; confidence?: number } {
+    // Validate input: null, undefined, or empty/whitespace-only strings
+    if (recordText === null || recordText === undefined) {
+      throw new Error('記録データが不足しています');
     }
   
-    if (typeof input !== 'string') {
-      throw new Error('記録データが不正です');
+    if (typeof recordText !== 'string') {
+      throw new Error('記録データは文字列である必要があります');
     }
   
-    const trimmed = input.trim();
+    const trimmed = recordText.trim();
     if (trimmed === '') {
-      throw new Error('記録データが不正です');
+      throw new Error('記録データが空です');
     }
   
-    // Parse JSON
-    let parsed: { content?: string; timestamp?: string };
+    // Try to parse as JSON
+    let parsedContent: { content?: string; timestamp?: string } | null = null;
     try {
-      parsed = JSON.parse(input);
+      parsedContent = JSON.parse(recordText);
     } catch {
-      throw new Error('JSON形式が不正です');
+      throw new Error('記録データの形式が不正です');
     }
   
-    // Extract content and timestamp
-    const content = parsed.content || '';
-    const timestamp = parsed.timestamp || new Date().toISOString();
+    // Extract content from parsed JSON
+    const content = parsedContent?.content || '';
+    if (!content || content.trim() === '') {
+      throw new Error('記録データが空です');
+    }
   
     // Classify based on content keywords
+    const lowerContent = content.toLowerCase();
+    
     let category = '未分類';
     let confidence = 0;
   
-    const contentLower = content.toLowerCase();
-  
-    if (contentLower.includes('調理時間') && (contentLower.includes('長い') || contentLower.includes('長すぎ'))) {
+    if (lowerContent.includes('調理時間') || lowerContent.includes('時間が長い') || lowerContent.includes('忙しい')) {
       category = '調理時間制限';
       confidence = 85;
-    } else if (contentLower.includes('アレルギー') || contentLower.includes('アレルゲン')) {
+    } else if (lowerContent.includes('アレルギー') || lowerContent.includes('アレルゲン') || lowerContent.includes('食べられない')) {
       category = 'アレルギー対応';
       confidence = 90;
-    } else if (contentLower.includes('予算') || contentLower.includes('コスト') || contentLower.includes('費用')) {
+    } else if (lowerContent.includes('予算') || lowerContent.includes('コスト') || lowerContent.includes('安い')) {
       category = '予算制約';
       confidence = 80;
-    } else if (contentLower.includes('栄養') || contentLower.includes('カロリー') || contentLower.includes('塩分')) {
+    } else if (lowerContent.includes('栄養') || lowerContent.includes('カロリー') || lowerContent.includes('塩分')) {
       category = '栄養管理';
       confidence = 75;
-    } else if (contentLower.includes('好み') || contentLower.includes('嫌い') || contentLower.includes('苦手')) {
-      category = '食材嗜好';
+    } else if (lowerContent.includes('好み') || lowerContent.includes('嫌い') || lowerContent.includes('好きな')) {
+      category = '食材選好';
       confidence = 70;
     } else {
-      category = '未分類';
-      confidence = 0;
+      category = '一般的なフィードバック';
+      confidence = 50;
     }
   
     return {
       category,
-      confidence,
-      isClassified: confidence > 0,
-      timestamp
+      isClassified: true,
+      confidence
     };
   }
   return { classifyInterviewRecord };
@@ -1541,15 +1823,8 @@ const __aivicBundle_20_classifyInterviewContent = (() => {
     processedAt: Date;
   }
   
-  interface ClassifyInterviewContentCategory {
-    categoryId: string;
-    categoryName: string;
-    matchConfidenceScore: number;
-    isSelected: boolean;
-  }
-  
   interface ClassifyInterviewContentResult {
-    classifiedCategories: ClassifyInterviewContentCategory[];
+    classifiedCategories: ClassifiedCategory[];
     totalCategoriesMatched: number;
     classificationConfidenceScore: number;
     savedToDatabaseFlag: boolean;
@@ -1557,74 +1832,108 @@ const __aivicBundle_20_classifyInterviewContent = (() => {
   }
   
   const classifyInterviewContentStore = {
-    categoryKeywords: {
-      pain_work_stress: ['仕事', 'ストレス', '忙しい', '職場', '業務'],
-      pain_fatigue: ['疲れ', '疲労', '疲れて', '疲れている'],
-      pain_mental_health: ['気分', '落ち込み', 'メンタル', '心', '抑うつ'],
-      pain_ingredient_restriction: ['食材', '制限', 'アレルギー', '避ける'],
-      pain_cooking_time: ['調理時間', '時間が長い', '調理が長い'],
-      pain_budget: ['予算', '費用', 'コスト', '安い'],
-    },
+    painCategories: [
+      {
+        categoryId: 'pain_work_stress',
+        categoryName: '仕事ストレス',
+        keywords: ['仕事', '忙しい', 'ストレス', '職場', '業務'],
+      },
+      {
+        categoryId: 'pain_fatigue',
+        categoryName: '疲労',
+        keywords: ['疲れ', '疲労', '疲れている', '疲弊', 'つかれ'],
+      },
+      {
+        categoryId: 'pain_mental_health',
+        categoryName: 'メンタルヘルス',
+        keywords: ['気分', '落ち込み', '抑うつ', 'うつ', '心', 'メンタル', '気持ち'],
+      },
+      {
+        categoryId: 'pain_cooking_time',
+        categoryName: '調理時間制限',
+        keywords: ['調理時間', '短い', '簡単', '時間がない', '時短'],
+      },
+      {
+        categoryId: 'pain_ingredient_restriction',
+        categoryName: '食材制限',
+        keywords: ['アレルギー', '制限', '避ける', '食べられない'],
+      },
+      {
+        categoryId: 'pain_budget',
+        categoryName: '予算制限',
+        keywords: ['予算', '安い', 'コスト', '費用', '安価'],
+      },
+    ],
   };
+  
+  function calculateMatchConfidenceScore(
+    content: string,
+    keywords: string[]
+  ): number {
+    const contentLower = content.toLowerCase();
+    let matchCount = 0;
+  
+    for (const keyword of keywords) {
+      if (contentLower.includes(keyword.toLowerCase())) {
+        matchCount++;
+      }
+    }
+  
+    if (matchCount === 0) {
+      return 0;
+    }
+  
+    const baseScore = (matchCount / keywords.length) * 100;
+    const confidenceScore = Math.min(100, Math.round(baseScore * 0.9 + 10));
+  
+    return confidenceScore;
+  }
   
    function classifyInterviewContent(
     config: ClassifyInterviewContentInput
   ): ClassifyInterviewContentResult {
-    const { interviewId, userId, interviewContent, processedAt } = config;
+    if (config["interviewId"] === undefined || config["interviewId"] === null) { throw new Error("interviewId is required"); }
+    if (config["userId"] === undefined || config["userId"] === null) { throw new Error("userId is required"); }
+    const { interviewContent, processedAt } = config;
   
-    const classifiedCategories: ClassifyInterviewContentCategory[] = [];
-    const confidenceScores: number[] = [];
+    const classifiedCategories: ClassifiedCategory[] = [];
   
-    for (const [categoryId, keywords] of Object.entries(
-      classifyInterviewContentStore.categoryKeywords
-    )) {
-      const matchCount = keywords.filter((keyword) =>
-        interviewContent.includes(keyword)
-      ).length;
+    for (const category of classifyInterviewContentStore.painCategories) {
+      const matchConfidenceScore = calculateMatchConfidenceScore(
+        interviewContent,
+        category.keywords
+      );
   
-      if (matchCount > 0) {
-        const matchConfidenceScore = Math.min(
-          100,
-          Math.round((matchCount / keywords.length) * 100)
-        );
-  
+      if (matchConfidenceScore > 0) {
         classifiedCategories.push({
-          categoryId,
-          categoryName: getCategoryName(categoryId),
+          categoryId: category.categoryId,
+          categoryName: category.categoryName,
           matchConfidenceScore,
           isSelected: true,
         });
-  
-        confidenceScores.push(matchConfidenceScore);
       }
     }
   
-    const classificationConfidenceScore =
-      confidenceScores.length > 0
-        ? Math.round(
-            confidenceScores.reduce((a, b) => a + b, 0) / confidenceScores.length
-          )
-        : 0;
+    const totalCategoriesMatched = classifiedCategories.length;
+  
+    let classificationConfidenceScore = 0;
+    if (totalCategoriesMatched > 0) {
+      const sumScores = classifiedCategories.reduce(
+        (sum, cat) => sum + cat.matchConfidenceScore,
+        0
+      );
+      classificationConfidenceScore = Math.round(
+        sumScores / totalCategoriesMatched
+      );
+    }
   
     return {
       classifiedCategories,
-      totalCategoriesMatched: classifiedCategories.length,
+      totalCategoriesMatched,
       classificationConfidenceScore,
       savedToDatabaseFlag: true,
       classifiedTimestamp: processedAt,
     };
-  }
-  
-  function getCategoryName(categoryId: string): string {
-    const categoryNames: Record<string, string> = {
-      pain_work_stress: '仕事ストレス',
-      pain_fatigue: '疲労',
-      pain_mental_health: 'メンタルヘルス',
-      pain_ingredient_restriction: '食材制限',
-      pain_cooking_time: '調理時間制限',
-      pain_budget: '予算制限',
-    };
-    return categoryNames[categoryId] || categoryId;
   }
   return { classifyInterviewContent };
 })();
@@ -1633,7 +1942,7 @@ export const classifyInterviewContent = __aivicBundle_20_classifyInterviewConten
 
 /* AIVIC_FUNCTION_BUNDLE_START owner=calculateCookingTimeReduction exports=calculateCookingTimeReduction */
 const __aivicBundle_21_calculateCookingTimeReduction = (() => {
-  function calculateCookingTimeReduction(input: {
+  function calculateCookingTimeReduction(config: {
     targetCookingTimeMinutes: number;
     actualCookingTimeMinutes: number;
     segmentId: string;
@@ -1644,15 +1953,22 @@ const __aivicBundle_21_calculateCookingTimeReduction = (() => {
     isNegativeReduction: boolean;
     displayValue: string;
   } {
-    const reductionMinutes = input.targetCookingTimeMinutes - input.actualCookingTimeMinutes;
-    const reductionPercentage = (reductionMinutes / input.targetCookingTimeMinutes) * 100;
+    const { targetCookingTimeMinutes, actualCookingTimeMinutes, segmentId } = config;
+  
+    const reductionMinutes = targetCookingTimeMinutes - actualCookingTimeMinutes;
+    const reductionPercentage =
+      targetCookingTimeMinutes !== 0
+        ? (reductionMinutes / targetCookingTimeMinutes) * 100
+        : 0;
     const isNegativeReduction = reductionMinutes < 0;
-    const displayValue = `${reductionMinutes}分 (${reductionPercentage}%)`;
+  
+    const roundedPercentage = Math.round(reductionPercentage);
+    const displayValue = `${reductionMinutes}分 (${roundedPercentage}%)`;
   
     return {
       reductionMinutes,
-      reductionPercentage,
-      segmentId: input.segmentId,
+      reductionPercentage: roundedPercentage,
+      segmentId,
       isNegativeReduction,
       displayValue,
     };
